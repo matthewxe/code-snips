@@ -1,0 +1,37 @@
+{% extends "template.html" %} 
+
+{% block body %}
+<link rel="stylesheet" href="../static/login-input.css" />
+
+{% if warning %}
+<div class="w-50 mx-auto mt-5 alert alert-danger" role="alert">
+  {{ warning }}
+</div>
+{% endif %}
+
+  <form class="w-75 mx-auto mt-5" action="/register" method="POST">
+    <div class="mx-auto mb-3 login-input">
+      <label class="form-label">Username</label>
+      <input required class="form-control" type="text" autofocus autocomplete="off" name="username" placeholder="Username"
+        aria-label="Username" />
+      <div class="form-text">Usernames are always lowercase</div>
+    </div>
+    <div class="mx-auto mb-3 login-input required">
+      <label for="inputPassword5" class="form-label">Password</label>
+      <input required class="form-control" type="password" autocomplete="new-password" name="password" placeholder="Password"
+        aria-label="Password" />
+    </div>
+    <div class="mx-auto mb-3 login-input">
+      <label for="inputPassword5" class="form-label">Confirm password</label>
+      <input required class="form-control" type="password" autocomplete="off" name="confirm_password" placeholder="Confirm password"
+        aria-label="Confirm password" />
+      <sub>Already have an account? <a href="login">Click here to log in</a></sub>
+    </div>
+
+    <button class="btn btn-primary position-relative start-50 translate-middle-x" type="submit">
+      Register
+    </button>
+  </form>
+
+
+{% endblock %}
