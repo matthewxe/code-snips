@@ -1,6 +1,7 @@
 {% extends "template.html" %} 
 
 {% block body %}
+<h1 class="mt-3 text-center">Register</h1>
 <link rel="stylesheet" href="../static/login-input.css" />
 
 {% if warning %}
@@ -9,7 +10,7 @@
 </div>
 {% endif %}
 
-  <form class="w-75 mx-auto mt-5" action="/register" method="POST">
+  <form class="w-75 mx-auto mt-3" action="/register" method="POST">
     <div class="mx-auto mb-3 login-input">
       <label class="form-label">Username</label>
       <input required class="form-control" type="text" autofocus autocomplete="off" name="username" placeholder="Username"

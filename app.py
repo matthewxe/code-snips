@@ -200,5 +200,24 @@ def discover():
     return redirect(url_for('index'))  # }}}
 
 
+@app.route('/create/<typeofpost>')  # {{{
+@login_required
+def create(typeofpost):
+    match (typeofpost):
+        case 'post':
+            return render_template('post.html')
+        case 'request':
+            return render_template('post_request.html')
+        case _:
+            return redirect(url_for('index'))
+    # }}}
+
+
+@app.route('/create')  # {{{
+@login_required
+def create_menu():
+    return render_template('create.html')  # }}}
+
+
 if __name__ == '__main__':
     app.run()
