@@ -2,17 +2,18 @@
 {% block head %}
 <link href="../static/post.css" rel="stylesheet" />
 <script defer src="https://cdn.jsdelivr.net/npm/ace-builds@1.32.2/src-min-noconflict/ace.min.js"></script>
-<script defer src="../static/post.js"></script>
+<script defer type="module" src="../static/post.js"></script>
 {% endblock %}
 {% block title %}Create -{% endblock %}
 {% block body %}
 <h1 class="mt-3 text-center">Create</h1>
+{% if warning %}<div class="w-50 mx-auto mt-5 alert alert-danger" role="alert">{{ warning }}</div>{% endif %}
 <form id="form" action="/create/post" method="post">
 </form>
 <div class="card mx-5 p-3 mb-3">
 	<h3>Title</h3>
-	<input class="form-control" type="text" name="title" form="form" placeholder="A concise title of the program"
-		id="titleform">
+	<input required minlength="3" maxlength="50" class="form-control" type="text" name="title" form="form"
+		placeholder="A concise title of the program" id="titleform">
 </div>
 <div class="card mx-5 p-3 mb-3">
 	<h3>Description</h3>
@@ -22,8 +23,8 @@
 		or about your program
 	</p>
 	<div class="form-floating">
-		<textarea form="form" name="description" class="form-control" placeholder="Add a description"
-			id="floatingDescription"></textarea>
+		<textarea required minlength="3" maxlength="500" form="form" name="description" class="form-control"
+			placeholder="Add a description" id="floatingDescription"></textarea>
 		<label for="floatingDescription">Description</label>
 	</div>
 </div>
@@ -32,33 +33,29 @@
 	<div class="container text-center">
 		<div class="row">
 			<div class="col-5">
-				<select id="language" form="form" name="language" class="form-select form-select-lg w-3 mb-3 me-auto"
+				<select required id="language" form="form" name="language" class="form-select form-select-lg w-3 mb-3 me-auto"
 					aria-label="Small select example">
-					<option disabled selected>Language</option>
-					{% for lang in languages %}<option value="{{ lang.ace }}">{{ lang.name }}</option>{% endfor %}
+					<option disabled selected value="">Language</option>
+					{% for key, value in languages.items() %}<option value="{{ key }}">{{ value.name }}</option>{% endfor %}
 				</select>
 			</div>
 			<div class="col-3">
-				<select id="editorMax" class="form-select form-select-lg w-3 mb-3 me-auto" aria-label="Small select example">
-					<option disabled selected>Editor Max Length</option>
-					<option value="10">10</option>
-					<option value="20">20</option>
-					<option value="30">30</option>
-				</select>
+				<input id="editorMax" type="number" min="4" class="form-control form-control-lg w-3 mb-3 me-auto"
+					placeholder="Height editor">
 			</div>
 			<div class="col-2">
-				<select id="editorMax" class="form-select form-select-lg w-3 mb-3 me-auto" aria-label="Small select example">
+				<select id="tabSize" class="form-select form-select-lg w-3 mb-3 me-auto">
 					<option disabled selected>Tab Size</option>
-					<option value="2">2</option>
-					<option value="4">4</option>
-					<option value="8">8</option>
+					<option value=2>2</option>
+					<option value=4>4</option>
+					<option value=8>8</option>
 				</select>
 			</div>
 			<div class="col-2">
-				<select id="editorMax" class="form-select form-select-lg w-3 mb-3 me-auto" aria-label="Small select example">
-					<option disabled selected>Wrap Style</option>
-					<option value="nowrap">No Wrap</option>
-					<option value="softwrap">Soft Wrap</option>
+				<select id="wrapMode" class="form-select form-select-lg w-3 mb-3 me-auto">
+					<option disabled selected>Wrap Mode</option>
+					<option value=false>No Wrap</option>
+					<option value=true>Yes Wrap</option>
 				</select>
 			</div>
 		</div>
@@ -68,5 +65,7 @@
 		<div id="ace-editor" class="fs-5"></div>
 	</div>
 </div>
-<button id="submit_button" name="code" form="form" class="btn btn-primary" type="submit">Submit</button>
+<div class="container-fluid justify-content-center d-flex">
+	<button id="submit_button" name="code" form="form" class="text-center btn btn-primary" type="submit">Submit</button>
+</div>
 {% endblock %}
