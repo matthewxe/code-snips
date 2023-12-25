@@ -4,7 +4,7 @@ async function get_yell(id) {
 }
 
 async function create_card(get) {
-    yell_id = get["yell_id"];
+    var yell_id = get["yell_id"];
 
     var card = document.createElement("div");
     card.className = "col bg-body-tertiary rounded mx-2 card p-3";
@@ -92,6 +92,7 @@ async function create_card(get) {
     code.appendChild(code_content);
     accordion.appendChild(code);
     card.appendChild(accordion);
+
     Prism.highlightElement(code_content_body_pre_code);
     return card;
 }
@@ -99,7 +100,7 @@ async function create_card(get) {
 async function main() {
     var main = document.getElementById("main");
     var col = 1;
-    get = await get_yell("last");
+    var get = await get_yell("last");
     for (var index = get["yell_id"]; index > 0; index--) {
         console.log("yo", index);
         if (col % 2 != 0) {

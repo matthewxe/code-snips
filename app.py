@@ -343,7 +343,6 @@ def create(typeofpost):
 def get_yell(yell_id):
     if yell_id == 'last':
         query = Post.query.order_by(Post.yell_id.desc()).first()
-        print(query)
     else:
         query = Post.query.filter_by(yell_id=yell_id).first()
     if not query:
