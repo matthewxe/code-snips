@@ -20,3 +20,9 @@ pip install -r requirments.txt
 ```bash
 ./deploy.sh
 ```
+
+## Powered by
+
+- (Bootstrap)[https://getbootstrap.com/]
+- (Prismjs)[https://prismjs.com]
+- (Ace)[https://ace.c9.io/]
