@@ -23,6 +23,6 @@ pip install -r requirments.txt
 
 ## Powered by
 
-- (Bootstrap)[https://getbootstrap.com/]
-- (Prismjs)[https://prismjs.com]
-- (Ace)[https://ace.c9.io/]
+- [Bootstrap](https://getbootstrap.com)
+- [Prismjs](https://prismjs.com)
+- [Ace](https://ace.c9.io/)
