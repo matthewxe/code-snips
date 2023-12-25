@@ -3,7 +3,7 @@ async function get_yell(id) {
     return await result.json();
 }
 
-async function create_card(get) {
+export async function create_card(get) {
     var yell_id = get["yell_id"];
 
     var card = document.createElement("div");
