@@ -15,17 +15,18 @@
     integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
     crossorigin="anonymous"></script>
   <title>
-    {% block title %} {% endblock %} Yello! The friendly code snippet sharing
+    {% block title %} {% endblock %} Yällo! The friendly code snippet sharing
     site
   </title>
-  <!-- Quicksand font -->
-  <link href="https://fonts.googleapis.com/css?family=Quicksand" rel="stylesheet" />
+  <!-- <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" /> -->
+  <link rel="shortcut icon" href="../static/favicon.ico" />
   <link href="../static/styles.css" rel="stylesheet" />
+  {% block head %} {% endblock %}
 </head>
 
 <body data-bs-theme="dark">
   <nav class="navbar navbar-expand-md px-5 bg-body-tertiary">
-    <a class="navbar-brand me-0 me-md-3 fs-4" href="/">Yello!</a>
+    <a class="navbar-brand me-0 me-md-3 fs-4" href="/">Yällo!</a>
     <form class="nav-item" id="search" role="search" action="/search" method="GET">
       <input class="form-control" name="q" type="search" placeholder="Search" aria-label="Search" />
     </form>

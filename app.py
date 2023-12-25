@@ -16,6 +16,22 @@ from flask_login import (
 LOG = '\033[100;92mLOG ::'
 FAIL = '\033[100;91mFAIL::'
 
+# Supported Languages
+class Lang:
+    def __init__(self, name, ace, prism):
+        self.name = name
+        self.ace = ace
+        self.prism = prism
+
+
+SUPPORTED_LANGS = [
+    Lang('Python', 'python', 'python'),
+    Lang('HTML', 'html', 'html'),
+    Lang('CSS', 'css', 'css'),
+    Lang('Javascript', 'javascript', 'javascript'),
+    Lang('C', 'c_cpp', 'c'),
+]
+
 # Flask Setup {{{
 app = Flask(__name__)
 from os import urandom
@@ -182,10 +198,7 @@ def login():
         login_user(query)
         return redirect(url_for('index'))
     else:
-        return render_template('login.html')
-
-
-# }}}
+        return render_template('login.html')   # }}}
 
 
 @app.route('/logout')  # {{{
@@ -196,27 +209,37 @@ def logout():
 
 @app.route('/discover')  # {{{
 def discover():
-    logout_user()
-    return redirect(url_for('index'))  # }}}
+    return 'shithouse'  # }}}
 
 
-@app.route('/create/<typeofpost>')  # {{{
+@app.route('/create/<typeofpost>', methods=['GET', 'POST'])  # {{{
 @login_required
 def create(typeofpost):
-    match (typeofpost):
-        case 'post':
-            return render_template('post.html')
-        case 'request':
-            return render_template('post_request.html')
-        case _:
-            return redirect(url_for('index'))
-    # }}}
+    if request.method == 'POST':
+        return 'shit'
+    else:
+        if not typeofpost:
+            return redirect(url_for('index'))   # }}}
+
+        match (typeofpost):
+            case 'post':
+                return render_template(
+                    'post.html',
+                    is_active=current_user.is_active,
+                    languages=SUPPORTED_LANGS,
+                )
+            case 'request':
+                return render_template('post_request.html')
+            case _:
+                return redirect(url_for('index'))   # }}}
 
 
 @app.route('/create')  # {{{
-@login_required
 def create_menu():
-    return render_template('create.html')  # }}}
+    return render_template(
+        'create.html',
+        is_active=current_user.is_active,
+    )  # }}}
 
 
 if __name__ == '__main__':

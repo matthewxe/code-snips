@@ -1,0 +1,19 @@
+{% extends "template.html" %}
+{% block title %}Create -{% endblock %}
+{% block body %}
+<h1 class="text-center mt-3">Create a...</h1>
+<div class="row justify-content-center text-center">
+  <div class="p-3 m-2 col-md-5 bg-body-secondary rounded">
+    <h1 class="py-2 bg-body-tertiary rounded">Post!</h1>
+    <h4>Post a snippet of your code!</h4>
+    <p>Show your own solution to a specific problem, Fun applications, or even just boilerplate!</p>
+    <button class="btn btn-primary" onclick="document.location='/create/post'">Post!</button>
+  </div>
+  <div class="p-3 m-2 col-md-5 bg-body-secondary rounded">
+    <h1 class="py-2 bg-body-tertiary rounded">Request!</h1>
+    <h4>Request a solution to a problem</h4>
+    <p>Show your own solution to a specific problem, Fun applications, or even just boilerplate!</p>
+    <button class="btn btn-primary" onclick="document.location='/create/request'">Request!</button>
+  </div>
+</div>
+{% endblock %}

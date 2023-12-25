@@ -1,0 +1,45 @@
+{% extends "template.html" %}
+{% block head %}
+<link href="../static/post.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/ace-builds@1.32.2/src-min-noconflict/ace.min.js"></script>
+<script defer src="../static/post.js"></script>
+<style type="text/css" media="screen">
+	#editor {
+		position: absolute;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+	}
+</style>
+{% endblock %}
+{% block title %}Create -{% endblock %}
+{% block body %}
+<h1 class="mt-3 text-center">Create</h1>
+<form id="form" action="/create/post" method="post">
+</form>
+<div class="card mx-5 p-3 mb-3">
+	<h3>Title</h3>
+	<input class="form-control" type="text" name="title" form="form" placeholder="A clear concise title of the solution"
+		id="titleform">
+</div>
+<div class="card mx-5 p-3 mb-3">
+	<h3>Description</h3>
+	<p>You can use markdown formatting</p>
+	<div class="form-floating">
+		<textarea class="form-control" placeholder="Add a description" id="floatingDescription"></textarea>
+		<label for="floatingDescription">Description</label>
+	</div>
+</div>
+<div class="card mx-5 p-3 mb-3">
+	<h3>Code</h3>
+	<select id="language" class="form-select form-select-sm w-3 mb-3" aria-label="Small select example">
+		<option disabled selected>Language</option>
+		{% for lang in languages %}<option value="{{ lang.ace }}">{{ lang.name }}</option>{% endfor %}
+	</select>
+	<div class="card fs-5" style="font-size: 144px;">
+		<div id="ace-editor" class="fs-3"></div>
+	</div>
+</div>
+<button class="btn btn-primary" type="button">Submit</button>
+{% endblock %}
