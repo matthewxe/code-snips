@@ -20,11 +20,13 @@ from flask_login import (
     login_required,
 )
 from html_sanitizer import Sanitizer
+import bleach
+import nh3
 from markdown import markdown
 from jarowinkler import jarowinkler_similarity
 
 sanitizer = Sanitizer()
-# LOGGING FORMAT
+# LOGGING FOMAT
 # def log(message, typeoflog):
 def log(messages):
     escapecode = '\033[100;92mLOG ::'
@@ -307,7 +309,8 @@ def create(typeofpost):
                 code = request.form.get('code')
                 if not code:
                     return send_error(render_template, 'Must provide code.')
-                elif not len(title) >= 3 and not len(title) <= 50:
+
+                if not len(title) >= 3 and not len(title) <= 50:
                     return send_error(
                         render_template,
                         'Titles must be atleast 3 characters long and a maximum of 50',
@@ -323,9 +326,11 @@ def create(typeofpost):
                         'Must choose a supported language',
                     )
 
-                description = sanitizer.sanitize(markdown(description))
-                # description = markdown(description)
-                code = sanitizer.sanitize(code)
+                print(title, description, code)
+                title = nh3.clean(title)
+                description = nh3.clean(markdown(description))
+                code = nh3.clean_text(code)
+                print(title, description, code)
                 db.session.add(
                     Post(
                         yell_maker_id=user_id,
