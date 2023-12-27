@@ -1,9 +1,9 @@
 #!/bin/bash
  
 python -m venv ./venv
+source ./venv/bin/activate
 pip install nodeenv
 nodeenv -p
-source ./venv/bin/activate
 npm i --prefix ./static/npm/ bootstrap@5.3.2
 npm install -g sass
 sass ./static/scss/custom.scss ./static/css/bootstrap.css
