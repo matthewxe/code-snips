@@ -424,7 +424,7 @@ def get_yell_multi(ws, searched):
                 data = ws.receive()
                 if data == 'next':
                     # print('recieved')
-                break
+                    break
 
         temp_dict[query.yell_id] = 0
         langs = SUPPORTED_LANGS.get(query.yell_language)
