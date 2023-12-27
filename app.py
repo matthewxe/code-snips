@@ -377,8 +377,8 @@ def get_yell(yell_id):
             yell_maker=User.query.filter_by(id=query.yell_maker_id)
             .first()
             .username,
-            # yell_language=langs.name,
-            # yell_language_prism=langs.prism,
+            yell_language=langs.name,
+            yell_language_prism=langs.prism,
             yell_title=query.yell_title,
             yell_rating=query.yell_rating,
             yell_description=query.yell_description,
@@ -427,8 +427,8 @@ def get_yell_multi(ws, searched):
             yell_maker=User.query.filter_by(id=query.yell_maker_id)
             .first()
             .username,
-            # yell_language=langs.name,
-            # yell_language_prism=langs.prism,
+            yell_language=langs.name,
+            yell_language_prism=langs.prism,
             yell_title=query.yell_title,
             yell_rating=query.yell_rating,
             yell_description=query.yell_description,
