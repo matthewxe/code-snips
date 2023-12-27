@@ -8,11 +8,32 @@
 {% if search %}
 <script defer type="module" src="../static/js/search.js"></script>
 {% else %}
-<script defer type="module" src="../static/js/discover.js">main()</script>
+<script type="module">import {main_func} from "../static/js/discover.js"; main_func()</script>
 {% endif %}
 {% endblock %}
 {% block title %}Discover -{% endblock %}
 {% block body %}
-{% if search %}<h3 class="m-3">Seaching for... {{ search }}</h3>{% endif %}
-<div id="main" class="d-flex flex-wrap container-md justify-content-evenly mt-3" </div>
-  {% endblock %}
+{% if search %}
+<h3 id="searchup" data-query="{{ search }}" class="ms-5 m-3">Seaching for... {{ search }}</h3>
+{% endif %}
+<div id="main" class="d-flex flex-wrap container-md justify-content-evenly mt-3"></div>
+<div class="d-flex justify-content-center p-5">
+  <div class="spinner-border" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+<div id="warn" class="d-flex justify-content-center p-5 d-none">
+  <div class="w-50 mx-auto mt-5 alert alert-info" role="info">
+    <h1>We are sorry if its taking a while, please don't refresh the page.</h1>
+  </div>
+</div>
+<script>
+  setTimeout(() => {
+    const box = document.getElementById('box');
+
+    // 👇️ hides element (still takes up space on the page)
+    box.style.visibility = 'show';
+  }, 1000);
+</script>
+<!--   <button id="next" type="button" class="container mx-auto text-center btn btn-primary">Next</button> -->
+{% endblock %}

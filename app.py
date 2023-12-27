@@ -4,11 +4,11 @@ from flask import (
     redirect,
     render_template,
     url_for,
-    session,
     jsonify,
 )
+from json import dumps, loads
+from flask_sock import Sock
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Integer, func
 from sqlalchemy.orm import Mapped
 from flask_bcrypt import Bcrypt
 from flask_login import (
@@ -23,7 +23,7 @@ from html_sanitizer import Sanitizer
 from nh3 import clean, clean_text
 from markdown import markdown
 from jarowinkler import jarowinkler_similarity
-import datetime
+from datetime import datetime
 
 sanitizer = Sanitizer()
 # LOGGING FOMAT
@@ -60,6 +60,7 @@ SUPPORTED_LANGS = {
 
 # Flask Setup {{{
 app = Flask(__name__)
+sock = Sock(app)
 from os import urandom
 
 app.config['SECRET_KEY'] = urandom(24)
@@ -93,7 +94,7 @@ class Post(db.Model):
     __tablename__ = 'post'
     yell_id: Mapped[int] = db.Column(db.Integer, primary_key=True)
     yell_maker_id: Mapped[int] = db.Column(
-        db.Integer, db.ForeignKey('user.id')
+        db.Integer, db.ForeignKey('user.id'), nullable=False
     )
     yell_maker = db.relationship('User', backref=db.backref('yell_maker'))
     yell_title: Mapped[str] = db.Column(db.String(100), nullable=False)
@@ -102,7 +103,7 @@ class Post(db.Model):
     yell_language: Mapped[str] = db.Column(db.String, nullable=False)
     yell_rating: Mapped[str] = db.Column(db.Float, nullable=False, default=0)
     yell_datetime: Mapped[str] = db.Column(
-        db.DateTime, nullable=False, default=datetime.datetime.now()
+        db.DateTime, nullable=False, default=datetime.now()
     )
 
     def __repr__(self):
@@ -156,15 +157,15 @@ def page_not_found(e):
 @app.route('/')  # {{{
 def index():
 
-    log([User.is_active, User.is_authenticated])
-    log(
-        [
-            User.query.all(),
-            current_user.get_id(),
-            current_user.is_active,
-            current_user.is_authenticated,
-        ]
-    )
+    # log([User.is_active, User.is_authenticated])
+    # log(
+    #     [
+    #         User.query.all(),
+    #         current_user.get_id(),
+    #         current_user.is_active,
+    #         current_user.is_authenticated,
+    #     ]
+    # )
     return render_template(
         'index.html', is_active=current_user.is_active
     )  # }}}
@@ -265,10 +266,11 @@ def discover():
 
 @app.route('/search')  # {{{
 def search():
-    print(request.args.get('q'))
+    # print(request.args.get('q'))
     return render_template(
         'discover.html',
-        is_active=current_user.is_active, search=request.args.get('q')
+        is_active=current_user.is_active,
+        search=request.args.get('q'),
     )  # }}}
 
 
@@ -368,6 +370,7 @@ def create(typeofpost):
 def get_yell(yell_id):
     if yell_id == 'last':
         query = Post.query.order_by(Post.yell_id.desc()).first()
+        print(query)
     else:
         query = Post.query.filter_by(yell_id=yell_id).first()
     if not query:
@@ -381,8 +384,8 @@ def get_yell(yell_id):
             yell_maker=User.query.filter_by(id=query.yell_maker_id)
             .first()
             .username,
-            yell_language=langs.name,
-            yell_language_prism=langs.prism,
+            # yell_language=langs.name,
+            # yell_language_prism=langs.prism,
             yell_title=query.yell_title,
             yell_rating=query.yell_rating,
             yell_description=query.yell_description,
@@ -393,5 +396,103 @@ def get_yell(yell_id):
         return '404'   # }}}
 
 
+@sock.route('/yell/search/<searched>')  # {{{
+def get_yell_multi(ws, searched):
+    print('socketd', ws, searched)
+    all = Post.query.all()
+    temp_dict = {}
+    waiting = False
+    while True:
+        if waiting == True:
+            data = ws.receive
+            if data == 'next':
+                print('recieved')
+                waiting = False
+
+        elif waiting == False:
+            # else:
+            print('not waiting')
+            for idx, query in enumerate(all, 1):
+                print(idx)
+
+                if idx % 15 == 0:
+
+                    temp_dict = dict(
+                        sorted(
+                            temp_dict.items(),
+                            key=lambda item: item[1],
+                            reverse=True,
+                        )
+                    )
+                    for result in temp_dict:
+                        ws.send(result)
+                    waiting = True
+                    break
+
+                temp_dict[query.yell_id] = 0
+                langs = SUPPORTED_LANGS.get(query.yell_language)
+                ass = dict(
+                    yell_id=query.yell_id,
+                    yell_maker_id=query.yell_maker_id,
+                    yell_maker=User.query.filter_by(id=query.yell_maker_id)
+                    .first()
+                    .username,
+                    # yell_language=langs.name,
+                    # yell_language_prism=langs.prism,
+                    yell_title=query.yell_title,
+                    yell_rating=query.yell_rating,
+                    yell_description=query.yell_description,
+                    yell_code=query.yell_code,
+                    yell_datetime=str(query.yell_datetime),
+                )
+                print(ass)
+                for key in ass:
+                    print(ass[key])
+                    temp_dict[query.yell_id] += jarowinkler_similarity(
+                        str(searched), str(ass[key])
+                    )
+
+
+# }}}
+
+
+def insert_random(db, max):  # {{{
+    import random, string
+
+    def randomword(length):
+        letters = string.ascii_lowercase
+        return ''.join(random.choice(letters) for i in range(length))
+
+    for i in range(max):
+        print(i)
+
+        fake_user = i
+        # fake_user = random.randint(0, max)
+        db.session.add(
+            User(
+                id=fake_user,
+                username=randomword(50),
+                # hash=bcrypt.generate_password_hash(randomword(50)),
+                hash=randomword(50),
+            )
+        )
+        db.session.add(
+            Post(
+                yell_id=i,
+                yell_maker_id=fake_user,
+                yell_title=randomword(50),
+                yell_description=randomword(500),
+                yell_code=randomword(1000),
+                yell_language=randomword(10),
+            )
+        )
+
+    db.session.commit()
+
+
+# }}}
+
 if __name__ == '__main__':
-    app.run()
+    with app.app_context():
+        insert_random(db, 1000)
+    # app.run()

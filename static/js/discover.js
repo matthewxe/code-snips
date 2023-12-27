@@ -1,10 +1,12 @@
-export async function get_yell(id) {
+const main = document.getElementById("main");
+
+async function get_yell(id) {
     var result = await fetch("/yell/" + id);
     return await result.json();
 }
 
 // async function create_card(json) {
-export async function create_card(json) {
+async function create_card(json) {
     var yell_id = json["yell_id"];
 
     var card = document.createElement("div");
@@ -32,7 +34,6 @@ export async function create_card(json) {
 
     var accordion = document.createElement("div");
     accordion.className = "accordion";
-    // accordion.id = "accordionPanelsStayOpenExample";
 
     var description = document.createElement("div");
     description.className = "accordion-item";
@@ -42,7 +43,7 @@ export async function create_card(json) {
     description_header_button.className = "accordion-button collapsed";
     description_header_button.type = "button";
     description_header_button.dataset.bsToggle = "collapse";
-    description_header_button.dataset.bsTarjson =
+    description_header_button.dataset.bsTarget =
         "#accordionPanelDescription" + yell_id;
     description_header_button.ariaExpanded = "false";
     description_header_button.ariaControls =
@@ -70,7 +71,7 @@ export async function create_card(json) {
     code_header_button.className = "accordion-button";
     code_header_button.type = "button";
     code_header_button.dataset.bsToggle = "collapse";
-    code_header_button.dataset.bsTarjson = "#accordionPanelCode" + yell_id;
+    code_header_button.dataset.bsTarget = "#accordionPanelCode" + yell_id;
     code_header_button.ariaExpanded = "true";
     code_header_button.ariaControls = "accordionPanelCode" + yell_id;
     code_header_button.innerHTML = "Code";
@@ -87,7 +88,6 @@ export async function create_card(json) {
     var code_content_body_pre_code = document.createElement("code");
     code_content_body_pre_code.classList =
         "language-" + json["yell_language_prism"];
-    // console.log(json["yell_code_prism"]);
     code_content_body_pre_code.innerHTML = json["yell_code"];
     code_content_body_pre.appendChild(code_content_body_pre_code);
     code_content_body.appendChild(code_content_body_pre);
@@ -100,24 +100,40 @@ export async function create_card(json) {
     return card;
 }
 
-export async function add_card(index) {
-    console.log("request for post", index);
-    var main = document.getElementById("main");
-    var get = await get_yell(index);
+async function add_card_byid(id) {
+    console.log("request for post", id);
+    const get = await get_yell(id);
     if (get == 404) {
         return;
     }
 
     var card = await create_card(get);
     main.appendChild(card);
-    console.log("completed request for post", index);
+    console.log("completed request for post", id);
 }
 
-async function main() {
+async function add_card_bydict(dict) {
+    console.log("request for post", dict["yell_title"]);
+    if (dict == 404) {
+        return;
+    }
+
+    var card = await create_card(dict);
+    console.log(card);
+    main.appendChild(card);
+    console.log("completed request for post", dict["yell_title"]);
+}
+
+async function main_func() {
     var get = await get_yell("last");
     for (var index = get["yell_id"]; index > 0; index--) {
-        add_card(index);
+        var shit = await get_yell(index);
+        console.log(shit);
+        add_card_bydict(shit);
+        // add_card_byid(id);
     }
 }
 
-main();
+export { get_yell, add_card_byid, add_card_bydict, create_card, main_func };
+
+// main();
