@@ -17,7 +17,7 @@ async function handle_websocket_infinite_scroll(response) {
 	const endOfPage =
 		window.innerHeight + window.scrollY >= document.body.offsetHeight - offset;
 
-	console.log(endOfPage);
+	// console.log(endOfPage);
 	if (endOfPage) {
 		socket.send("next");
 		await new Promise((r) => setTimeout(r, 500));
