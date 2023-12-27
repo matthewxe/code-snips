@@ -61,6 +61,9 @@ sock = Sock(app)
 app.config['SOCK_SERVER_OPTIONS'] = {'ping_interval': 7}
 from os import urandom
 
+app.add_url_rule(
+    '/favicon.ico', redirect_to=url_for('static', filename='favicon.ico')
+)
 app.config['SECRET_KEY'] = urandom(24)
 
 # Bcrypt Setup
