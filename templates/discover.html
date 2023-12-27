@@ -1,14 +1,18 @@
 {% extends "template.html" %}
 {% block head %}
 <link href="https://fonts.googleapis.com/css?family=Fira+Code" rel="stylesheet" />
-<link href="../static/prism.css" rel="stylesheet" />
-<link href="../static/prism-one-dark.css" rel="stylesheet" />
-<link href="../static/discover.css" rel="stylesheet" />
-<script defer src="../static/prism.js"> </script>
-<script defer type="module" src="../static/discover.js"> </script>
+<link href="../static/css/prism.css" rel="stylesheet" />
+<link href="../static/css/prism-one-dark.css" rel="stylesheet" />
+<link href="../static/css/discover.css" rel="stylesheet" />
+<script defer src="../static/js/prism.js"> </script>
+{% if search %}
+<script defer type="module" src="../static/js/search.js"></script>
+{% else %}
+<script defer type="module" src="../static/js/discover.js">main()</script>
+{% endif %}
 {% endblock %}
-{% block title
-%}
-Discover -
-{% endblock %}
-{% block body %}<div id="main" class="p-5"></div>{% endblock %}
+{% block title %}Discover -{% endblock %}
+{% block body %}
+{% if search %}<h3 class="m-3">Seaching for... {{ search }}</h3>{% endif %}
+<div id="main" class="d-flex flex-wrap container-md justify-content-evenly mt-3" </div>
+  {% endblock %}

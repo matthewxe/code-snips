@@ -20,10 +20,10 @@ from flask_login import (
     login_required,
 )
 from html_sanitizer import Sanitizer
-import bleach
-import nh3
+from nh3 import clean, clean_text
 from markdown import markdown
 from jarowinkler import jarowinkler_similarity
+import datetime
 
 sanitizer = Sanitizer()
 # LOGGING FOMAT
@@ -54,6 +54,8 @@ SUPPORTED_LANGS = {
     'css': Lang('CSS', 'css', 'css'),
     'javascript': Lang('Javascript', 'javascript', 'javascript'),
     'c': Lang('C', 'c_cpp', 'c'),
+    'gdscript': Lang('GDScript', 'python', 'gdscript'),
+    'csharp': Lang('C#', 'csharp', 'csharp'),
 }  # }}}
 
 # Flask Setup {{{
@@ -94,11 +96,14 @@ class Post(db.Model):
         db.Integer, db.ForeignKey('user.id')
     )
     yell_maker = db.relationship('User', backref=db.backref('yell_maker'))
-    yell_title: Mapped[str] = db.Column(db.String(50), nullable=False)
-    yell_description: Mapped[str] = db.Column(db.String(500), nullable=False)
+    yell_title: Mapped[str] = db.Column(db.String(100), nullable=False)
+    yell_description: Mapped[str] = db.Column(db.String(1000), nullable=False)
     yell_code: Mapped[str] = db.Column(db.Text, nullable=False)
     yell_language: Mapped[str] = db.Column(db.String, nullable=False)
     yell_rating: Mapped[str] = db.Column(db.Float, nullable=False, default=0)
+    yell_datetime: Mapped[str] = db.Column(
+        db.DateTime, nullable=False, default=datetime.datetime.now()
+    )
 
     def __repr__(self):
         return f'<Post {self.yell_id} {self.yell_title}>'
@@ -121,7 +126,7 @@ class Request(UserMixin, db.Model):
     author_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey('user.id'))
     author = db.relationship('User', backref=db.backref('author'))
 
-    request_title: Mapped[str] = db.Column(db.String(50), nullable=False)
+    request_title: Mapped[str] = db.Column(db.String(100), nullable=False)
     request_rating: Mapped[str] = db.Column(
         db.Float, nullable=False, default=0
     )
@@ -260,9 +265,10 @@ def discover():
 
 @app.route('/search')  # {{{
 def search():
+    print(request.args.get('q'))
     return render_template(
         'discover.html',
-        is_active=current_user.is_active,
+        is_active=current_user.is_active, search=request.args.get('q')
     )  # }}}
 
 
@@ -306,19 +312,22 @@ def create(typeofpost):
                     return send_error(
                         render_template, 'Must choose a supported language.'
                     )
+                language = language.split(',')[1]
                 code = request.form.get('code')
                 if not code:
                     return send_error(render_template, 'Must provide code.')
 
-                if not len(title) >= 3 and not len(title) <= 50:
+                if not len(title) >= 3 and not len(title) <= 100:
                     return send_error(
                         render_template,
-                        'Titles must be atleast 3 characters long and a maximum of 50',
+                        'Titles must be atleast 3 characters long and a maximum of 100',
                     )
-                elif not len(description) >= 3 and not len(description) <= 500:
+                elif (
+                    not len(description) >= 3 and not len(description) <= 1000
+                ):
                     return send_error(
                         render_template,
-                        'Description must be atleast 3 characters long and a maximum of 500',
+                        'Description must be atleast 3 characters long and a maximum of 1000',
                     )
                 if not SUPPORTED_LANGS.get(language):
                     return send_error(
@@ -327,9 +336,9 @@ def create(typeofpost):
                     )
 
                 print(title, description, code)
-                title = nh3.clean(title)
-                description = nh3.clean(markdown(description))
-                code = nh3.clean_text(code)
+                title = clean(title)
+                description = clean(markdown(description))
+                code = clean_text(code)
                 print(title, description, code)
                 db.session.add(
                     Post(
@@ -364,6 +373,7 @@ def get_yell(yell_id):
     if not query:
         return '404'
 
+    langs = SUPPORTED_LANGS.get(query.yell_language)
     try:
         return jsonify(
             yell_id=query.yell_id,
@@ -371,12 +381,13 @@ def get_yell(yell_id):
             yell_maker=User.query.filter_by(id=query.yell_maker_id)
             .first()
             .username,
-            yell_language=query.yell_language,
-            yell_language_prism=SUPPORTED_LANGS.get(query.yell_language).prism,
+            yell_language=langs.name,
+            yell_language_prism=langs.prism,
             yell_title=query.yell_title,
             yell_rating=query.yell_rating,
             yell_description=query.yell_description,
             yell_code=query.yell_code,
+            yell_datetime=query.yell_datetime,
         )
     except:
         return '404'   # }}}

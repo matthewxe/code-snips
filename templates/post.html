@@ -1,8 +1,8 @@
 {% extends "template.html" %}
 {% block head %}
-<link href="../static/post.css" rel="stylesheet" />
+<link href="../static/css/post.css" rel="stylesheet" />
 <script defer src="https://cdn.jsdelivr.net/npm/ace-builds@1.32.2/src-min-noconflict/ace.min.js"></script>
-<script defer type="module" src="../static/post.js"></script>
+<script defer type="module" src="../static/js/post.js"></script>
 {% endblock %}
 {% block title %}Create -{% endblock %}
 {% block body %}
@@ -12,7 +12,7 @@
 </form>
 <div class="card container-md p-3 mb-3">
 	<h3>Title</h3>
-	<input required minlength="3" maxlength="50" class="form-control" type="text" name="title" form="form"
+	<input required minlength="3" maxlength="100" class="form-control" type="text" name="title" form="form"
 		placeholder="A concise title of the program" id="titleform">
 </div>
 <div class="card container-md p-3 mb-3">
@@ -22,7 +22,7 @@
 		or about your program
 	</p>
 	<div class="form-floating">
-		<textarea required minlength="3" maxlength="500" form="form" name="description" class="form-control"
+		<textarea required minlength="3" maxlength="1000" form="form" name="description" class="form-control"
 			placeholder="Add a description" id="floatingDescription"></textarea>
 		<label for="floatingDescription">Description</label>
 		<sub>Note: You can use markdown formatting</sub>
@@ -36,13 +36,20 @@
 				<select required id="language" form="form" name="language" class="form-select form-select-lg w-3 mb-3"
 					aria-label="Small select example">
 					<option disabled selected value="">Language</option>
-					{% for key, value in languages.items() %}<option value="{{ key }}">{{ value.name }}</option>{% endfor %}
+					{% for key, value in languages.items() %}
+					<option value="{{ value.ace }},{{ key }}">{{ value.name }}</option>
+					{% endfor
+					%}
 				</select>
 			</div>
-			<div class="col-3">
-				<input id="editorMax" type="number" min="4" class="form-control form-control-lg w-1 mb-3 me-auto"
-					placeholder="Height editor">
-			</div>
+			<!-- <div class="col-3"> -->
+			<!-- 	<input id="editorMax"
+ 	       type="number"
+ 	       min="4"
+ 	       class="form-control form-control-lg w-1 mb-3 me-auto"
+ 	       -->
+			<!-- 		placeholder="Height editor"> -->
+			<!-- </div> -->
 			<div class="col-2">
 				<select id="tabSize" class="form-select form-select-lg w-3 mb-3 me-auto">
 					<option disabled selected>Tab Size</option>
