@@ -61,10 +61,18 @@ sock = Sock(app)
 app.config['SOCK_SERVER_OPTIONS'] = {'ping_interval': 7}
 from os import urandom
 
-app.add_url_rule(
-    '/favicon.ico', redirect_to=url_for('static', filename='/img/favicon.ico')
-)
-app.config['SECRET_KEY'] = urandom(24)
+import os
+from flask import send_from_directory
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(
+        os.path.join(app.root_path, 'static'),
+        '/img/favicon.ico',
+        mimetype='image/vnd.microsoft.icon',
+    )
+
 
 # Bcrypt Setup
 bcrypt = Bcrypt(app)
