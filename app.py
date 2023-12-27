@@ -5,12 +5,10 @@ from flask import (
     render_template,
     url_for,
     jsonify,
-    session,
 )
 from json import dumps, loads
 from flask_sock import Sock
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import Mapped
 from flask_bcrypt import Bcrypt
 from flask_login import (
     UserMixin,
@@ -80,11 +78,9 @@ db.init_app(app)
 
 class User(UserMixin, db.Model):
     __tablename__ = 'user'
-    id: Mapped[int] = db.Column(db.Integer, primary_key=True, nullable=False)
-    username: Mapped[str] = db.Column(
-        db.String(50), unique=True, nullable=False
-    )
-    hash: Mapped[str] = db.Column(db.String(60), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    hash = db.Column(db.String(60), nullable=False)
 
     def __repr__(self):
         return f'<User {self.id} {self.username}>'
@@ -92,17 +88,17 @@ class User(UserMixin, db.Model):
 
 class Post(db.Model):
     __tablename__ = 'post'
-    yell_id: Mapped[int] = db.Column(db.Integer, primary_key=True)
-    yell_maker_id: Mapped[int] = db.Column(
+    yell_id = db.Column(db.Integer, primary_key=True)
+    yell_maker_id = db.Column(
         db.Integer, db.ForeignKey('user.id'), nullable=False
     )
     yell_maker = db.relationship('User', backref=db.backref('yell_maker'))
-    yell_title: Mapped[str] = db.Column(db.String(100), nullable=False)
-    yell_description: Mapped[str] = db.Column(db.String(1000), nullable=False)
-    yell_code: Mapped[str] = db.Column(db.Text, nullable=False)
-    yell_language: Mapped[str] = db.Column(db.String, nullable=False)
-    yell_rating: Mapped[str] = db.Column(db.Float, nullable=False, default=0)
-    yell_datetime: Mapped[str] = db.Column(
+    yell_title = db.Column(db.String(100), nullable=False)
+    yell_description = db.Column(db.String(1000), nullable=False)
+    yell_code = db.Column(db.Text, nullable=False)
+    yell_language = db.Column(db.String, nullable=False)
+    yell_rating = db.Column(db.Float, nullable=False, default=0)
+    yell_datetime = db.Column(
         db.DateTime, nullable=False, default=datetime.now()
     )
 
@@ -111,26 +107,22 @@ class Post(db.Model):
 
 
 class Tag(db.Model):
-    tag_id: Mapped[int] = db.Column(db.Integer, primary_key=True)
-    original_yell_id: Mapped[int] = db.Column(
-        db.Integer, db.ForeignKey('post.yell_id')
-    )
+    tag_id = db.Column(db.Integer, primary_key=True)
+    original_yell_id = db.Column(db.Integer, db.ForeignKey('post.yell_id'))
     original_yell = db.relationship('Post', backref=db.backref('post'))
-    tag_content: Mapped[str] = db.Column(db.String, nullable=False)
+    tag_content = db.Column(db.String, nullable=False)
 
     def __repr__(self):
         return f'<Tag {self.tag_id} {self.tag_content}>'
 
 
 class Request(UserMixin, db.Model):
-    request_id: Mapped[int] = db.Column(db.Integer, primary_key=True)
-    author_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey('user.id'))
+    request_id = db.Column(db.Integer, primary_key=True)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     author = db.relationship('User', backref=db.backref('author'))
 
-    request_title: Mapped[str] = db.Column(db.String(100), nullable=False)
-    request_rating: Mapped[str] = db.Column(
-        db.Float, nullable=False, default=0
-    )
+    request_title = db.Column(db.String(100), nullable=False)
+    request_rating = db.Column(db.Float, nullable=False, default=0)
     request_timetable = db.Column(db.String, nullable=False)
 
     def __repr__(self):
@@ -319,7 +311,7 @@ def create(typeofpost):
                 if not code:
                     return send_error(render_template, 'Must provide code.')
 
-                if not len(title) >= 3 and not len(title) <= 100:
+                elif not len(title) >= 3 and not len(title) <= 100:
                     return send_error(
                         render_template,
                         'Titles must be atleast 3 characters long and a maximum of 100',
@@ -331,7 +323,7 @@ def create(typeofpost):
                         render_template,
                         'Description must be atleast 3 characters long and a maximum of 1000',
                     )
-                if not SUPPORTED_LANGS.get(language):
+                elif not SUPPORTED_LANGS.get(language):
                     return send_error(
                         render_template,
                         'Must choose a supported language',
