@@ -1,10 +1,11 @@
 {% extends "template.html" %}
 {% block head %}
 <link href="https://fonts.googleapis.com/css?family=Fira+Code" rel="stylesheet" />
-<link href="../static/css/prism.css" rel="stylesheet" />
-<link href="../static/css/prism-one-dark.css" rel="stylesheet" />
+<link href="../static/css/pygments.css" rel="stylesheet" />
+<!-- <link href="../static/css/prism.css" rel="stylesheet" /> -->
+<!-- <link href="../static/css/prism-one-dark.css" rel="stylesheet" /> -->
 <link href="../static/css/discover.css" rel="stylesheet" />
-<script defer src="../static/js/prism.js"> </script>
+<!-- <script defer src="../static/js/prism.js"> </script> -->
 {% if search %}
 <script defer type="module" src="../static/js/search.js"></script>
 {% else %}
@@ -17,25 +18,11 @@
 <h3 id="searchup" data-query="{{ search }}" class="ms-5 m-3">Seaching for... {{ search }}</h3>
 {% endif %}
 <div id="main" class="d-flex flex-wrap container-md justify-content-evenly mt-3"></div>
-<div class="d-flex justify-content-center p-5">
-  <div class="spinner-border" role="status">
+<div class="text-center">
+  <div id="spinner" class="spinner-grow" role="status">
     <span class="visually-hidden">Loading...</span>
   </div>
+  <h5 id="warn">We are sorry if its taking a while, please don't refresh the page.</h5>
 </div>
-<h5 id="warn" class="text-center" style="display: none;">
-  We are sorry if its taking a while, please don't refresh the page.
-</h5>
-<!-- <div id="warn" class="justify-content-center p-5" style="display: none;"> -->
-<!-- <div class="w-50 mx-auto mt-5 alert alert-info" role="info"> -->
-<!--   <h1>We are sorry if its taking a while, please don't refresh the page.</h1> -->
-<!-- </div> -->
-<!-- </div> -->
-<script>
-  var el = document.getElementById('warn');
-
-  setTimeout(() => {
-    el.style.display = 'block';
-  }, 7000); // 👈️ delay in milliseconds
-</script>
 <!--   <button id="next" type="button" class="container mx-auto text-center btn btn-primary">Next</button> -->
 {% endblock %}

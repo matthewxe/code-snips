@@ -47,8 +47,8 @@
       </ul>
 
       <div class="navbar-nav d-flex container-fluid justify-content-md-end pb-1 mb-lg-0 p-0 fs-5">
-        {% if is_active == True %}
-        <a class="nav-link" href="/account">Account</a>
+        {% if current_user.is_active == True %}
+        <a class="nav-link" href="/account">{{ current_user.username }}</a>
         <a class="nav-link" href="/login">Log out</a>
         {% else %}
         <a class="nav-link me-2" href="/register">Register</a>

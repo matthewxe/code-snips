@@ -27,7 +27,7 @@ async function create_card(json) {
 		"Made by " + json["yell_maker"] + ", " + json["yell_datetime"];
 	const made_inLang = document.createElement("p");
 	made_inLang.className = "pe-3 align-middle text-info";
-	made_inLang.innerHTML = json["yell_language"];
+	made_inLang.innerHTML = json["yell_filename"];
 	lower_container.appendChild(made_by);
 	lower_container.appendChild(made_inLang);
 	card.appendChild(lower_container);
@@ -86,8 +86,8 @@ async function create_card(json) {
 	code_content_body.className = "accordion-body p-1";
 	const code_content_body_pre = document.createElement("pre");
 	const code_content_body_pre_code = document.createElement("code");
-	code_content_body_pre_code.classList =
-		"language-" + json["yell_language_prism"];
+	// code_content_body_pre_code.classList =
+	// 	"language-" + json["yell_language_prism"];
 	code_content_body_pre_code.innerHTML = json["yell_code"];
 	code_content_body_pre.appendChild(code_content_body_pre_code);
 	code_content_body.appendChild(code_content_body_pre);
@@ -96,7 +96,7 @@ async function create_card(json) {
 	accordion.appendChild(code);
 	card.appendChild(accordion);
 
-	Prism.highlightElement(code_content_body_pre_code);
+	// Prism.highlightElement(code_content_body_pre_code);
 	return card;
 }
 
@@ -146,10 +146,31 @@ async function main_func() {
 			await wait_for_scroll();
 		}
 		add_card_byid(index);
-		// add_card_byid(id);
 	}
+	stop_spinner();
 }
 
-export { get_yell, add_card_byid, add_card_bydict, create_card, main_func };
+const warn = document.getElementById("warn");
+const spinner = document.getElementById("spinner");
+
+const showtext = setTimeout(() => {
+	warn.style.display = "block";
+}, 7000);
+
+function stop_spinner() {
+	clearTimeout(showtext);
+	spinner.style.display = "none";
+	warn.style.display = "block";
+	warn.innerHTML = "No more results";
+}
+
+export {
+	get_yell,
+	add_card_byid,
+	add_card_bydict,
+	create_card,
+	main_func,
+	stop_spinner,
+};
 
 // main();
