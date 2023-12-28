@@ -1,11 +1,12 @@
 flask
+flask_bcrypt
+flask_login
 flask_sock
 flask_sqlalchemy
 sqlalchemy
-flask_bcrypt
-flask_login
-pyuwsgi
-markdown
-pygments
 rapidfuzz
 nh3
+markdown
+pygments
+pygments-better-html
+pyuwsgi

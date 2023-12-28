@@ -48,7 +48,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 # }}}
 
-# Flask-SQLAlchemy{{{
+# Flask-SQLAlchemy Database{{{
 db = SQLAlchemy()
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 db.init_app(app)
@@ -64,47 +64,69 @@ class User(UserMixin, db.Model):
         return f'<User {self.id} {self.username}>'
 
 
-class Post(db.Model):
-    __tablename__ = 'post'
+class Yell(db.Model):
+    __tablename__ = 'yell'
     yell_id = db.Column(db.Integer, primary_key=True)
-    yell_maker_id = db.Column(
-        db.Integer, db.ForeignKey('user.id'), nullable=False
-    )
-    yell_maker = db.relationship('User', backref=db.backref('yell_maker'))
+    yell_content_id = db.Column(db.Integer, primary_key=True)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    author = db.relationship('User', backref=db.backref('author'))
     yell_title = db.Column(db.String(100), nullable=False)
-    yell_description = db.Column(db.String(1000), nullable=False)
-    yell_code = db.Column(db.Text, nullable=False)
-    yell_filename = db.Column(db.String, nullable=False)
     yell_rating = db.Column(db.Float, nullable=False, default=0)
+    yell_type = db.Column(db.String(3), nullable=False)
     yell_datetime = db.Column(
         db.DateTime, nullable=False, default=datetime.now()
     )
 
     def __repr__(self):
-        return f'<Post {self.yell_id} {self.yell_title}>'
+        return f'<Yell {self.yell_id} {self.yell_title}>'
+
+
+class Pst(db.Model):
+    post_content_id = db.Column(db.Integer, primary_key=True)
+    request_id = db.Column(db.Integer, db.ForeignKey('yell.yell_id'))
+    # request = db.relationship('Yell', backref=db.backref('post'))
+    post_description = db.Column(db.String(1000), nullable=False)
+    post_code = db.Column(db.Text, nullable=False)
+    post_filename = db.Column(db.String(50), nullable=False)
+
+    # def __repr__(self):
+    #     return (
+    #         f'<Pst {self.post_content_id} {self.post_id} {self.post_filename}>'
+    #     )
+
+
+class Req(db.Model):
+    request_content_id = db.Column(db.Integer, primary_key=True)
+    original_yell_id = db.Column(db.Integer, db.ForeignKey('yell.yell_id'))
+    # original_yell = db.relationship('Yell', backref=db.backref('post'))
+    request_content = db.Column(db.Text, nullable=False)
+
+    # def __repr__(self):
+    #     return f'<Req {self.request_content_id} {self.request_id} {self.request_content}>'
 
 
 class Tag(db.Model):
     tag_id = db.Column(db.Integer, primary_key=True)
-    original_yell_id = db.Column(db.Integer, db.ForeignKey('post.yell_id'))
-    original_yell = db.relationship('Post', backref=db.backref('post'))
+    original_yell_id = db.Column(db.Integer, db.ForeignKey('yell.yell_id'))
+    # original_yell = db.relationship('Yell', backref=db.backref('post'))
     tag_content = db.Column(db.String, nullable=False)
+    tag_type = db.Column(db.String, nullable=False)
 
     def __repr__(self):
         return f'<Tag {self.tag_id} {self.tag_content}>'
 
 
-class Request(UserMixin, db.Model):
-    request_id = db.Column(db.Integer, primary_key=True)
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    author = db.relationship('User', backref=db.backref('author'))
-
-    request_title = db.Column(db.String(100), nullable=False)
-    request_rating = db.Column(db.Float, nullable=False, default=0)
-    request_timetable = db.Column(db.String, nullable=False)
+class Comment(db.Model):
+    comment_id = db.Column(db.Integer, primary_key=True)
+    original_yell_id = db.Column(db.Integer, db.ForeignKey('yell.yell_id'))
+    # original_yell = db.relationship('Yell', backref=db.backref('post'))
+    comment_content = db.Column(db.String, nullable=False)
+    comment_datetime = db.Column(
+        db.DateTime, nullable=False, default=datetime.now()
+    )
 
     def __repr__(self):
-        return f'<Request {self.request_id} {self.request_title}>'
+        return f'<Comment {self.comment_id} {self.comment_content}>'
 
 
 with app.app_context():
@@ -115,7 +137,6 @@ with app.app_context():
 # Other{{{
 @login_manager.user_loader
 def load_user(id):
-    # print(LOG, User.query.get(id), id, END)
     return User.query.get(id)
 
 
@@ -129,10 +150,9 @@ def page_not_found(error):
 
 @app.route('/')  # {{{
 def index():
-    if current_user.is_active:
-        print(current_user.username, current_user.hash)
-    else:
-        print(current_user.is_anonymous)
+    print(current_user.is_authenticated)
+    print(current_user.is_active)
+    print(current_user.is_anonymous)
     return render_template('index.html', current_user=current_user)
 
 
@@ -142,36 +162,42 @@ def index():
 @app.route('/register', methods=['GET', 'POST'])  # {{{
 def register():
     if request.method == 'POST':
+        send_error = lambda warning: render_template(
+            'register.html',
+            warning=warning,
+            username=username or '',
+            password=password or '',
+            confirm_password=confirm_password or '',
+        )
+
         username = request.form.get('username')
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
-        if not username or not password or not confirm_password:
-            return render_template(
-                'register.html', warning='Do not leave the input blank'
-            )
+        if not username:
+            return send_error('Must provide a username')
+        elif not password:
+            return send_error('Must provide a password')
+        elif not confirm_password:
+            return send_error('Must provide a confirmation password')
+        elif not username or not password or not confirm_password:
+            return send_error('Do not leave the input blank')
         elif password != confirm_password:
-            return render_template(
-                'register.html', warning='Passwords are not the same'
-            )
+            return send_error('Passwords are not the same')
         elif len(username) < 4 or len(password) < 4:
-            return render_template(
-                'register.html',
-                warning='Username or password must be atleast 4 characters long',
+            return send_error(
+                'Username or password must be atleast 4 characters long'
             )
         elif len(username) > 50 or len(password) > 50:
-            return render_template(
-                'register.html',
-                warning='Username or password must not be longer than 50 characters',
+            return send_error(
+                'Username or password must not be longer than 50 characters'
             )
         elif not username.isalnum():
-            return render_template(
-                'register.html',
-                warning='Usernames must only contain English characters or numbers',
+            return send_error(
+                'Usernames must only contain English characters or numbers'
             )
         elif ' ' in password and password.isascii():
-            return render_template(
-                'register.html',
-                warning='Usernames must only contain English characters or numbers',
+            return send_error(
+                'Usernames must only contain English characters or numbers'
             )
 
         username = username.lower()
@@ -190,32 +216,37 @@ def register():
         db.session.commit()
 
         return redirect(url_for('login'))
+    elif current_user.is_anonymous:
+        return render_template('register.html')
     else:
-        return render_template('register.html')  # }}}
+        return redirect(url_for('index'))  # }}}
 
 
 @app.route('/login', methods=['GET', 'POST'])  # {{{
 @login_manager.unauthorized_handler
 def login():
     if request.method == 'POST':
+        send_error = lambda warning: render_template(
+            'login.html',
+            warning=warning,
+            username=username or '',
+            password=password or '',
+        )
         username = request.form.get('username')
         password = request.form.get('password')
-        if not username or not password:
-            return render_template(
-                'login.html', warning='Do not leave the input blank'
-            )
+        if not username:
+            return send_error('Must provide a username')
+        elif not password:
+            return send_error('Must provide a password')
         username = username.lower()
         query = db.session.execute(
             db.select(User).where(User.username == username)
         ).scalar()
         if not query:
-            return render_template(
-                'login.html',
-                warning="That user doesn't exist",
-            )
+            return send_error('That user does not exist')
         hash = query.hash
         if not bcrypt.check_password_hash(hash, password):
-            return render_template('login.html', warning='Wrong password')
+            return send_error('Wrong password')
 
         login_user(query)
         return redirect(url_for('index'))
@@ -248,7 +279,6 @@ def discover():
 
 @app.route('/search')  # {{{
 def search():
-    # print(request.args.get('q'))
     return render_template(
         'discover.html',
         current_user=current_user,
@@ -274,37 +304,41 @@ def create_menu():
 @login_required
 def post():
     if request.method == 'POST':
-        send_error = lambda render_template, warning: render_template(
+        send_error = lambda warning: render_template(
             'post.html',
             warning=warning,
             current_user=current_user,
+            title=title or '',
+            description=description or '',
+            filename=filename or '',
+            code=code or '',
         )
         user_id = current_user.get_id()
-        if not user_id:
-            return send_error(render_template, 'yuh')
-
         title = request.form.get('title')
-        if not title:
-            return send_error(render_template, 'Must provide a title.')
         description = request.form.get('description')
-        if not description:
-            return send_error(render_template, 'Must provide a description.')
         filename = request.form.get('filename')
-        if not filename:
-            return send_error(render_template, 'Must have a file name.')
         code = request.form.get('code')
-        if not code:
-            return send_error(render_template, 'Must provide code.')
-
-        elif not len(title) >= 3 and not len(title) <= 100:
+        if not user_id:
+            return redirect(url_for('register'))
+        elif not title:
+            return send_error('Must provide a title')
+        elif not description:
+            return send_error('Must provide a description')
+        elif not filename:
+            return send_error('Must have a file name')
+        elif not code:
+            return send_error('Must provide code')
+        elif not len(title) >= 3 or not len(title) <= 100:
             return send_error(
-                render_template,
                 'Titles must be atleast 3 characters long and a maximum of 100',
             )
-        elif not len(description) >= 3 and not len(description) <= 1000:
+        elif not len(description) >= 3 or not len(description) <= 1000:
             return send_error(
-                render_template,
                 'Description must be atleast 3 characters long and a maximum of 1000',
+            )
+        elif not len(description) >= 3 or not len(description) <= 50:
+            return send_error(
+                'Filenames must be atleast 3 characters long and a maximum of 50',
             )
 
         title = clean(title)
@@ -317,22 +351,25 @@ def post():
                 ],
             )
         )
-        # code = clean_text(code)
         filename = clean_text(filename)
-        print(LOG, title, description, code, filename, END)
 
         try:
             lexer = guess_lexer_for_filename(filename, code)
             code = highlight(
-                code, lexer, HtmlFormatter(style='one-dark', lineos='table')
+                code,
+                lexer,
+                HtmlFormatter(
+                    style='one-dark',
+                    linenos='table',
+                    wrapcode=True,
+                ),
             )
         except:
             code = clean_text(code)
 
-        print(LOG, code, END)
         db.session.add(
-            Post(
-                yell_maker_id=user_id,
+            Yell(
+                author_id=user_id,
                 yell_title=title,
                 yell_description=description,
                 yell_code=code,
@@ -349,13 +386,19 @@ def post():
         )
 
 
+# }}}
+
+
 @app.route('/create/request', methods=['GET', 'POST'])  # {{{
 @login_required
 def post_request():
     if request.method == 'POST':
         return render_template('post_request.html')
     else:
-        return redirect(url_for('index'))
+        return render_template(
+            'request.html',
+            current_user=current_user,
+        )
 
 
 # }}}
@@ -365,22 +408,21 @@ def post_request():
 def get_yell(yell_id):
     if yell_id == 'last':
         query = db.session.execute(
-            db.select(Post).order_by(Post.yell_id.desc())
+            db.select(Yell).order_by(Yell.yell_id.desc())
         ).scalar()
     else:
         query = db.session.execute(
-            db.select(Post).where(Post.yell_id == yell_id)
+            db.select(Yell).where(Yell.yell_id == yell_id)
         ).scalar()
-    print(query)
     if not query:
         return '404'
 
     # try:
     return jsonify(
         yell_id=query.yell_id,
-        yell_maker_id=query.yell_maker_id,
-        yell_maker=db.session.execute(
-            db.select(User).where(User.id == query.yell_maker_id)
+        author_id=query.author_id,
+        author=db.session.execute(
+            db.select(User).where(User.id == query.author_id)
         )
         .scalar()
         .username,
@@ -395,33 +437,12 @@ def get_yell(yell_id):
     #     return '404'   # }}}
 
 
-def send_temp_dict(ws, temp_dict):
-    temp_dict = dict(
-        sorted(
-            temp_dict.items(),
-            key=lambda item: item[1],
-            reverse=True,
-        )
-    )
-    print(temp_dict)
-    for result in temp_dict:
-        ws.send(result)
-
-
 @sock.route('/yell/search/<searched>')  # {{{
 def get_yell_multi(ws, searched):
-    # if session.get('ws'):
-    #     ws = session['ws']
-    # else:
-    #     session['ws'] = ws
-    # print('socketd', ws, searched)
-
-    all = db.session.execute(db.select(Post)).scalars().all()
+    all = db.session.execute(db.select(Yell)).scalars().all()
     threshold = 80
     temp_dict = {}
-    # print('not waiting')
     for idx, query in enumerate(all, 1):
-        # print(idx)
         if len(temp_dict) >= 15:
 
             send_temp_dict(ws, temp_dict)
@@ -429,7 +450,6 @@ def get_yell_multi(ws, searched):
             while True:
                 data = ws.receive()
                 if data == 'next':
-                    # print('recieved')
                     break
 
         temp_dict[query.yell_id] = 0
@@ -444,53 +464,66 @@ def get_yell_multi(ws, searched):
             ratio = fuzz.ratio(str(searched), str(item))
             temp_dict[query.yell_id] += ratio * idx
         temp_dict[query.yell_id] /= 5
-        print(temp_dict)
         if temp_dict[query.yell_id] < threshold:
             temp_dict.pop(query.yell_id)
     send_temp_dict(ws, temp_dict)
     ws.send('404')
 
 
+def send_temp_dict(ws, temp_dict):
+    temp_dict = dict(
+        sorted(
+            temp_dict.items(),
+            key=lambda item: item[1],
+            reverse=True,
+        )
+    )
+    for result in temp_dict:
+        ws.send(result)
+
+
 # }}}
 
 
-def insert_random(db, max):  # {{{
-    import random, string
-
-    def randomword(length):
-        letters = string.ascii_lowercase
-        return ''.join(random.choice(letters) for i in range(length))
-
-    for i in range(max):
-        # print(i)
-
-        fake_user = i
-        # fake_user = random.randint(0, max)
-        db.session.add(
-            User(
-                id=fake_user,
-                username=randomword(50),
-                # hash=bcrypt.generate_password_hash(randomword(50)),
-                hash=randomword(50),
-            )
-        )
-        db.session.add(
-            Post(
-                yell_id=i,
-                yell_maker_id=fake_user,
-                yell_title=randomword(50),
-                yell_description=randomword(500),
-                yell_code=randomword(1000),
-                yell_filename=randomword(15),
-            )
-        )
-
-    db.session.commit()
-
-
-# }}}
+# def insert_random(db, max):  # {{{
+#     import random, string
+#
+#     def randomword(length):
+#         letters = string.ascii_lowercase
+#         return ''.join(random.choice(letters) for i in range(length))
+#
+#     for i in range(max):
+#         # print(i)
+#
+#         fake_user = i
+#         # fake_user = random.randint(0, max)
+#         db.session.add(
+#             User(
+#                 id=fake_user,
+#                 username=randomword(50),
+#                 # hash=bcrypt.generate_password_hash(randomword(50)),
+#                 hash=randomword(50),
+#             )
+#         )
+#         db.session.add(
+#             Yell(
+#                 yell_id=i,
+#                 yell_author_id=fake_user,
+#                 yell_title=randomword(50),
+#                 yell_description=randomword(500),
+#                 yell_code=randomword(1000),
+#                 yell_filename=randomword(15),
+#             )
+#         )
+#
+#     db.session.commit()
+#
+#
+# with app.app_context():
+#     insert_random(db, 10000)
+#
+#
+# # }}}
 
 if __name__ == '__main__':
-    with app.app_context():
-        insert_random(db, 10000)
     app.run(host='localhost')

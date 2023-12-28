@@ -2,10 +2,7 @@
 {% block head %}
 <link href="https://fonts.googleapis.com/css?family=Fira+Code" rel="stylesheet" />
 <link href="../static/css/pygments.css" rel="stylesheet" />
-<!-- <link href="../static/css/prism.css" rel="stylesheet" /> -->
-<!-- <link href="../static/css/prism-one-dark.css" rel="stylesheet" /> -->
 <link href="../static/css/discover.css" rel="stylesheet" />
-<!-- <script defer src="../static/js/prism.js"> </script> -->
 {% if search %}
 <script defer type="module" src="../static/js/search.js"></script>
 {% else %}
@@ -17,8 +14,8 @@
 {% if search %}
 <h3 id="searchup" data-query="{{ search }}" class="ms-5 m-3">Seaching for... {{ search }}</h3>
 {% endif %}
-<div id="main" class="d-flex flex-wrap container-md justify-content-evenly mt-3"></div>
-<div class="text-center">
+<div id="main" class="d-flex flex-wrap container-md justify-content-evenly mt-3 gap-3"></div>
+<div class="text-center my-5">
   <div id="spinner" class="spinner-grow" role="status">
     <span class="visually-hidden">Loading...</span>
   </div>
