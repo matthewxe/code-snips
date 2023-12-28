@@ -18,11 +18,11 @@ from flask_sock import Sock
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from nh3 import clean, clean_text
+from datetime import datetime
 from markdown import extensions, markdown
 from markdown.extensions.fenced_code import FencedCodeExtension as fenced_code
 from markdown.extensions.codehilite import CodeHiliteExtension as codehilite
 from rapidfuzz import fuzz
-from datetime import datetime
 from pygments import highlight
 from pygments.lexers import get_lexer_for_filename, guess_lexer_for_filename
 from pygments.formatters import HtmlFormatter
@@ -66,8 +66,7 @@ class User(UserMixin, db.Model):
 
 class Yell(db.Model):
     __tablename__ = 'yell'
-    yell_id = db.Column(db.Integer, primary_key=True)
-    yell_content_id = db.Column(db.Integer, primary_key=True)
+    yell_id = db.Column(db.Integer, primary_key=True, nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     author = db.relationship('User', backref=db.backref('author'))
     yell_title = db.Column(db.String(100), nullable=False)
@@ -82,9 +81,11 @@ class Yell(db.Model):
 
 
 class Pst(db.Model):
-    post_content_id = db.Column(db.Integer, primary_key=True)
-    request_id = db.Column(db.Integer, db.ForeignKey('yell.yell_id'))
-    # request = db.relationship('Yell', backref=db.backref('post'))
+    post_content_id = db.Column(db.Integer, primary_key=True, nullable=False)
+    original_yell_id = db.Column(
+        db.Integer, db.ForeignKey('yell.yell_id'), nullable=False
+    )
+    original_yell = db.relationship('Yell', backref=db.backref('request'))
     post_description = db.Column(db.String(1000), nullable=False)
     post_code = db.Column(db.Text, nullable=False)
     post_filename = db.Column(db.String(50), nullable=False)
@@ -96,9 +97,15 @@ class Pst(db.Model):
 
 
 class Req(db.Model):
-    request_content_id = db.Column(db.Integer, primary_key=True)
-    original_yell_id = db.Column(db.Integer, db.ForeignKey('yell.yell_id'))
-    # original_yell = db.relationship('Yell', backref=db.backref('post'))
+    request_content_id = db.Column(
+        db.Integer, primary_key=True, nullable=False
+    )
+    original_yell_id = db.Column(
+        db.Integer, db.ForeignKey('yell.yell_id'), nullable=False
+    )
+    original_yell = db.relationship(
+        'Yell', backref=db.backref('original_yell')
+    )
     request_content = db.Column(db.Text, nullable=False)
 
     # def __repr__(self):
@@ -107,8 +114,12 @@ class Req(db.Model):
 
 class Tag(db.Model):
     tag_id = db.Column(db.Integer, primary_key=True)
-    original_yell_id = db.Column(db.Integer, db.ForeignKey('yell.yell_id'))
-    # original_yell = db.relationship('Yell', backref=db.backref('post'))
+    original_yell_id = db.Column(
+        db.Integer, db.ForeignKey('yell.yell_id'), nullable=False
+    )
+    original_yell = db.relationship(
+        'Yell', backref=db.backref('original_yell')
+    )
     tag_content = db.Column(db.String, nullable=False)
     tag_type = db.Column(db.String, nullable=False)
 
@@ -118,8 +129,12 @@ class Tag(db.Model):
 
 class Comment(db.Model):
     comment_id = db.Column(db.Integer, primary_key=True)
-    original_yell_id = db.Column(db.Integer, db.ForeignKey('yell.yell_id'))
-    # original_yell = db.relationship('Yell', backref=db.backref('post'))
+    original_yell_id = db.Column(
+        db.Integer, db.ForeignKey('yell.yell_id'), nullable=False
+    )
+    original_yell = db.relationship(
+        'Yell', backref=db.backref('original_yell')
+    )
     comment_content = db.Column(db.String, nullable=False)
     comment_datetime = db.Column(
         db.DateTime, nullable=False, default=datetime.now()
@@ -336,7 +351,7 @@ def post():
             return send_error(
                 'Description must be atleast 3 characters long and a maximum of 1000',
             )
-        elif not len(description) >= 3 or not len(description) <= 50:
+        elif not len(filename) >= 3 or not len(filename) <= 50:
             return send_error(
                 'Filenames must be atleast 3 characters long and a maximum of 50',
             )
@@ -367,13 +382,20 @@ def post():
         except:
             code = clean_text(code)
 
+        print(
+            db.session.add(
+                Yell(
+                    author_id=user_id,
+                    yell_title=title,
+                    yell_type='pst',
+                )
+            )
+        )
         db.session.add(
-            Yell(
-                author_id=user_id,
-                yell_title=title,
-                yell_description=description,
-                yell_code=code,
-                yell_filename=filename,
+            Pst(
+                post_description=description,
+                post_code=code,
+                post_filename=filename,
             )
         )
         db.session.commit()
