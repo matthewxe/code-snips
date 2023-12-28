@@ -85,15 +85,12 @@ class Pst(db.Model):
     original_yell_id = db.Column(
         db.Integer, db.ForeignKey('yell.yell_id'), nullable=False
     )
-    original_yell = db.relationship('Yell', backref=db.backref('request'))
     post_description = db.Column(db.String(1000), nullable=False)
     post_code = db.Column(db.Text, nullable=False)
     post_filename = db.Column(db.String(50), nullable=False)
 
-    # def __repr__(self):
-    #     return (
-    #         f'<Pst {self.post_content_id} {self.post_id} {self.post_filename}>'
-    #     )
+    def __repr__(self):
+        return f'<Pst id: {self.post_content_id} original: {self.original_yell_id}>'
 
 
 class Req(db.Model):
@@ -103,22 +100,13 @@ class Req(db.Model):
     original_yell_id = db.Column(
         db.Integer, db.ForeignKey('yell.yell_id'), nullable=False
     )
-    original_yell = db.relationship(
-        'Yell', backref=db.backref('original_yell')
-    )
     request_content = db.Column(db.Text, nullable=False)
-
-    # def __repr__(self):
-    #     return f'<Req {self.request_content_id} {self.request_id} {self.request_content}>'
 
 
 class Tag(db.Model):
     tag_id = db.Column(db.Integer, primary_key=True)
     original_yell_id = db.Column(
         db.Integer, db.ForeignKey('yell.yell_id'), nullable=False
-    )
-    original_yell = db.relationship(
-        'Yell', backref=db.backref('original_yell')
     )
     tag_content = db.Column(db.String, nullable=False)
     tag_type = db.Column(db.String, nullable=False)
@@ -131,9 +119,6 @@ class Comment(db.Model):
     comment_id = db.Column(db.Integer, primary_key=True)
     original_yell_id = db.Column(
         db.Integer, db.ForeignKey('yell.yell_id'), nullable=False
-    )
-    original_yell = db.relationship(
-        'Yell', backref=db.backref('original_yell')
     )
     comment_content = db.Column(db.String, nullable=False)
     comment_datetime = db.Column(
@@ -152,7 +137,8 @@ with app.app_context():
 # Other{{{
 @login_manager.user_loader
 def load_user(id):
-    return User.query.get(id)
+    # return User.query.get(id)
+    return db.session.get(User, id)
 
 
 @app.errorhandler(404)
@@ -165,9 +151,9 @@ def page_not_found(error):
 
 @app.route('/')  # {{{
 def index():
-    print(current_user.is_authenticated)
-    print(current_user.is_active)
-    print(current_user.is_anonymous)
+    # print(current_user.is_authenticated)
+    # print(current_user.is_active)
+    # print(current_user.is_anonymous)
     return render_template('index.html', current_user=current_user)
 
 
@@ -217,7 +203,7 @@ def register():
 
         username = username.lower()
         check = db.session.execute(
-            db.select(User).where(User.username == username)
+            db.select(User).filter_by(username=username)
         ).scalar()
         if check:
             return render_template(
@@ -255,8 +241,9 @@ def login():
             return send_error('Must provide a password')
         username = username.lower()
         query = db.session.execute(
-            db.select(User).where(User.username == username)
+            db.select(User).filter_by(username=username)
         ).scalar()
+
         if not query:
             return send_error('That user does not exist')
         hash = query.hash
@@ -343,6 +330,10 @@ def post():
             return send_error('Must have a file name')
         elif not code:
             return send_error('Must provide code')
+        elif ' ' in filename:
+            return send_error(
+                'There should not be any whitespace in filenames',
+            )
         elif not len(title) >= 3 or not len(title) <= 100:
             return send_error(
                 'Titles must be atleast 3 characters long and a maximum of 100',
@@ -382,17 +373,16 @@ def post():
         except:
             code = clean_text(code)
 
-        print(
-            db.session.add(
-                Yell(
-                    author_id=user_id,
-                    yell_title=title,
-                    yell_type='pst',
-                )
-            )
+        yell = Yell(
+            author_id=user_id,
+            yell_title=title,
+            yell_type='pst',
         )
+        db.session.add(yell)
+        db.session.flush()
         db.session.add(
             Pst(
+                original_yell_id=yell.yell_id,
                 post_description=description,
                 post_code=code,
                 post_filename=filename,
@@ -432,29 +422,38 @@ def get_yell(yell_id):
         query = db.session.execute(
             db.select(Yell).order_by(Yell.yell_id.desc())
         ).scalar()
-    else:
+    elif yell_id == 'rated':
         query = db.session.execute(
-            db.select(Yell).where(Yell.yell_id == yell_id)
+            db.select(Yell).order_by(Yell.yell_rating.desc())
         ).scalar()
+    else:
+        query = db.session.get(Yell, yell_id)
+        db.session.get
     if not query:
         return '404'
 
-    # try:
-    return jsonify(
-        yell_id=query.yell_id,
-        author_id=query.author_id,
-        author=db.session.execute(
-            db.select(User).where(User.id == query.author_id)
-        )
-        .scalar()
-        .username,
-        yell_filename=query.yell_filename,
-        yell_title=query.yell_title,
-        yell_rating=query.yell_rating,
-        yell_description=query.yell_description,
-        yell_code=query.yell_code,
-        yell_datetime=query.yell_datetime,
-    )
+    match (query.yell_type):
+        case 'pst':
+            post = db.session.execute(
+                db.select(Pst).filter_by(original_yell_id=query.yell_id)
+            ).scalar()
+            return jsonify(
+                yell_id=query.yell_id,
+                author=db.session.get(User, query.author_id).username,
+                yell_title=query.yell_title,
+                yell_rating=query.yell_rating,
+                yell_type=query.yell_type,
+                yell_datetime=query.yell_datetime,
+                post_code=post.post_code,
+                post_description=post.post_description,
+                post_filename=post.post_filename,
+            )
+
+        case 'req':
+            return 'balls'
+
+        case _:
+            return '404'
     # except:
     #     return '404'   # }}}
 

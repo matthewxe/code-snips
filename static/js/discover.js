@@ -27,7 +27,7 @@ async function create_card(json) {
 		"Made by " + json["yell_maker"] + ", " + json["yell_datetime"];
 	const made_inLang = document.createElement("p");
 	made_inLang.className = "pe-3 align-middle text-info";
-	made_inLang.innerHTML = json["yell_filename"];
+	made_inLang.innerHTML = json["post_filename"];
 	lower_container.appendChild(made_by);
 	lower_container.appendChild(made_inLang);
 	card.appendChild(lower_container);
@@ -58,7 +58,7 @@ async function create_card(json) {
 
 	const description_content_body = document.createElement("div");
 	description_content_body.className = "accordion-body";
-	description_content_body.innerHTML = json["yell_description"];
+	description_content_body.innerHTML = json["post_description"];
 	description_content.appendChild(description_content_body);
 	description.appendChild(description_content);
 	accordion.appendChild(description);
@@ -80,17 +80,26 @@ async function create_card(json) {
 
 	const code_content = document.createElement("div");
 	code_content.id = "accordionPanelCode" + yell_id;
-	code_content.className = "accordion-collapse collapse show";
+	code_content.className = "accordion-collapse collapse show position-relative";
 
 	const code_content_body = document.createElement("div");
-	code_content_body.className = "accordion-body p-1";
-	const code_content_body_pre = document.createElement("pre");
-	const code_content_body_pre_code = document.createElement("code");
-	// code_content_body_pre_code.classList =
-	// 	"language-" + json["yell_language_prism"];
-	code_content_body_pre_code.innerHTML = json["yell_code"];
-	code_content_body_pre.appendChild(code_content_body_pre_code);
-	code_content_body.appendChild(code_content_body_pre);
+	code_content_body.className = "accordion-body overflow-scroll p-0";
+	code_content_body.innerHTML = json["post_code"];
+
+	const code_content_copy = document.createElement("button");
+	code_content_copy.className = "card position-absolute top-0 end-0 pb-1 m-1";
+	code_content_copy.innerHTML = "Copy";
+	code_content_copy.onclick = () => {
+		navigator.clipboard.writeText(
+			code_content_body.getElementsByClassName("code")[0].textContent,
+		);
+		code_content_copy.innerHTML = "Copied";
+		setTimeout(() => {
+			code_content_copy.innerHTML = "Copy";
+		}, 2000);
+	};
+
+	code_content_body.appendChild(code_content_copy);
 	code_content.appendChild(code_content_body);
 	code.appendChild(code_content);
 	accordion.appendChild(code);
@@ -100,16 +109,17 @@ async function create_card(json) {
 	return card;
 }
 
-async function add_card_byid(id) {
-	// console.log("request for post", id);
+async function add_card_byid(id, div = main) {
+	console.log("request for post", id);
 	const get = await get_yell(id);
 	if (get == 404) {
+		console.log("failed request for post", id);
 		return 404;
 	}
 
 	const card = await create_card(get);
-	main.appendChild(card);
-	// console.log("completed request for post", id);
+	div.appendChild(card);
+	console.log("completed request for post", id);
 }
 
 async function add_card_bydict(dict) {
