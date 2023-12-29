@@ -19,14 +19,24 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from nh3 import clean, clean_text
 from datetime import datetime
-from markdown import extensions, markdown
+from markdown import markdown
 from markdown.extensions.fenced_code import FencedCodeExtension as fenced_code
 from markdown.extensions.codehilite import CodeHiliteExtension as codehilite
-from rapidfuzz import fuzz
+from rapidfuzz import fuzz, utils
 from pygments import highlight
-from pygments.lexers import get_lexer_for_filename, guess_lexer_for_filename
+from pygments.lexers import guess_lexer_for_filename
 from pygments.formatters import HtmlFormatter
-
+from sqlalchemy import (
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Float,
+    Text,
+    Boolean,
+)
+from sqlalchemy.orm import mapped_column, Mapped, relationship
+from typing import List
 
 # Print decorators
 LOG = '\033[100;92mLOG ::'
@@ -55,77 +65,113 @@ db.init_app(app)
 
 
 class User(UserMixin, db.Model):
-    __tablename__ = 'user'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    hash = db.Column(db.String(60), nullable=False)
+    __tablename__ = 'user_table'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(
+        String(50), unique=True, nullable=False
+    )
+    hash: Mapped[str] = mapped_column(String(60), nullable=False)
 
     def __repr__(self):
         return f'<User {self.id} {self.username}>'
 
 
 class Yell(db.Model):
-    __tablename__ = 'yell'
-    yell_id = db.Column(db.Integer, primary_key=True, nullable=False)
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    author = db.relationship('User', backref=db.backref('author'))
-    yell_title = db.Column(db.String(100), nullable=False)
-    yell_rating = db.Column(db.Float, nullable=False, default=0)
-    yell_type = db.Column(db.String(3), nullable=False)
-    yell_datetime = db.Column(
-        db.DateTime, nullable=False, default=datetime.utcnow()
+    __tablename__ = 'yell_table'
+    yell_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    author_id: Mapped[int] = mapped_column(
+        ForeignKey('user_table.id'), nullable=False
+    )
+    author: Mapped['User'] = relationship()
+    yell_title: Mapped[str] = mapped_column(String(100), nullable=False)
+    yell_rating: Mapped[float] = mapped_column(Float, default=0)
+    yell_type: Mapped[str] = mapped_column(String(3), nullable=False)
+    yell_datetime: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow()
     )
 
     def __repr__(self):
-        return f'<Yell {self.yell_id} {self.yell_title}>'
+        return f'<Yell id: {self.yell_id} author: {self.author} title: {self.yell_title}>'
 
 
 class Post(db.Model):
-    post_content_id = db.Column(db.Integer, primary_key=True, nullable=False)
-    original_yell_id = db.Column(
-        db.Integer, db.ForeignKey('yell.yell_id'), nullable=False
+    base_yell_id = mapped_column(
+        ForeignKey('yell_table.yell_id'), nullable=False
     )
-    post_description = db.Column(db.String(1000), nullable=False)
-    post_code = db.Column(db.Text, nullable=False)
-    post_filename = db.Column(db.String(50), nullable=False)
+    base_yell: Mapped['Yell'] = relationship()
+    post_content_id: Mapped[int] = mapped_column(primary_key=True)
+    post_description: Mapped[str] = mapped_column(String(5000), nullable=False)
+    post_code: Mapped[Text] = mapped_column(Text, nullable=False)
+    post_filename: Mapped[str] = mapped_column(String(50), nullable=False)
 
     def __repr__(self):
-        return f'<Post id: {self.post_content_id} original: {self.original_yell_id} content: {self.post_filename}>'
+        return (
+            f'<Post id: {self.post_content_id} filename: {self.post_filename}>'
+        )
 
 
 class Request(db.Model):
-    request_content_id = db.Column(
-        db.Integer, primary_key=True, nullable=False
+    base_yell_id: Mapped[int] = mapped_column(
+        ForeignKey('yell_table.yell_id'), nullable=False
     )
-    original_yell_id = db.Column(
-        db.Integer, db.ForeignKey('yell.yell_id'), nullable=False
+    base_yell: Mapped['Yell'] = relationship()
+    request_content_id: Mapped[int] = mapped_column(
+        primary_key=True, nullable=False
     )
-    request_content = db.Column(db.Text, nullable=False)
+    request_content: Mapped[str] = mapped_column(db.Text, nullable=False)
 
     def __repr__(self):
-        return f'<Request id: {self.request_content_id} original: {self.original_yell_id} content: {self.request_content}>'
+        return f'<Request id: {self.request_content_id} content: {self.request_content}>'
+
+
+class CommentSet(db.Model):
+    __tablename__ = 'comment_set_table'
+    original_yell_id: Mapped[int] = mapped_column(
+        ForeignKey('yell_table.yell_id')
+    )
+    comment_set_id: Mapped[int] = mapped_column(primary_key=True)
+    comment: Mapped[List['Comment']] = relationship()
 
 
 class Comment(db.Model):
-    comment_id = db.Column(db.Integer, primary_key=True)
-    original_yell_id = db.Column(
-        db.Integer, db.ForeignKey('yell.yell_id'), nullable=False
+    comment_id: Mapped[int] = mapped_column(primary_key=True)
+    comment_set_id: Mapped[int] = mapped_column(
+        ForeignKey('comment_set_table.comment_set_id'), nullable=False
     )
-    comment_content = db.Column(db.String, nullable=False)
+    base_yell_id: Mapped[int] = mapped_column(
+        ForeignKey('yell_table.yell_id'), nullable=False
+    )
+    base_yell: Mapped['Yell'] = relationship()
+    comment_content: Mapped[str] = mapped_column(String(5000), nullable=False)
 
     def __repr__(self):
-        return f'<Comment id: {self.comment_id} original: {self.original_yell_id} content: {self.comment_content}>'
+        return f'<Comment id: {self.comment_id} author: {self.base_yell.author} content: {self.comment_content}>'
 
 
 class Tag(db.Model):
-    tag_id = db.Column(db.Integer, primary_key=True)
-    original_yell_id = db.Column(
-        db.Integer, db.ForeignKey('yell.yell_id'), nullable=False
+    tag_id: Mapped[int] = mapped_column(primary_key=True)
+    original_yell_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey('yell_table.yell_id'), nullable=False
     )
-    tag_content = db.Column(db.String(30), nullable=False)
+    tag_content: Mapped[str] = mapped_column(db.String(180), nullable=False)
 
     def __repr__(self):
         return f'<Tag id: {self.tag_id} original: {self.original_yell_id} content: {self.tag_content}>'
+
+
+class Rating(db.Model):
+    rating_id: Mapped[int] = mapped_column(primary_key=True)
+    original_yell_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey('yell_table.yell_id'), nullable=False
+    )
+    rating: Mapped[bool] = mapped_column(Boolean)
+    critic_id: Mapped[int] = mapped_column(
+        ForeignKey('user_table.id'), nullable=False
+    )
+    # author: Mapped['User'] = relationship()
+
+    def __repr__(self):
+        return f'<Rating id: {self.rating_id} critic: {self.critic_id} rate: {self.rating}>'
 
 
 with app.app_context():
@@ -205,10 +251,7 @@ def register():
             db.select(User).filter_by(username=username)
         ).scalar()
         if check:
-            return render_template(
-                'register.html',
-                warning='That user already exists',
-            )
+            return send_error('That user already exists')
 
         hash = bcrypt.generate_password_hash(password)
 
@@ -311,6 +354,127 @@ def post():
             current_user=current_user,
             title=title or '',
             description=description or '',
+            tags=tags or '',
+            filename=filename or '',
+            code=code or '',
+        )
+        user_id = current_user.get_id()
+        title = request.form.get('title')
+        description = request.form.get('description')
+        tags = request.form.get('tags')
+        filename = request.form.get('filename')
+        code = request.form.get('code')
+        if not user_id:
+            return redirect(url_for('register'))
+        elif not title:
+            return send_error('Must provide a title')
+        elif not description:
+            return send_error('Must provide a description')
+        elif not filename:
+            return send_error('Must have a file name')
+        elif not code:
+            return send_error('Must provide code')
+        elif ' ' in filename:
+            return send_error(
+                'There should not be any whitespace in filenames',
+            )
+        elif not len(title) >= 3 or not len(title) <= 100:
+            return send_error(
+                'Titles must be atleast 3 characters long and a maximum of 100',
+            )
+        elif not len(description) >= 3 or not len(description) <= 1000:
+            return send_error(
+                'Description must be atleast 3 characters long and a maximum of 1000',
+            )
+        elif not len(filename) >= 3 or not len(filename) <= 50:
+            return send_error(
+                'Filenames must be atleast 3 characters long and a maximum of 50',
+            )
+
+        title = clean_text(title)
+        filename = clean_text(filename)
+
+        description = clean_text(
+            markdown(
+                description,
+                extensions=[
+                    codehilite(pygments_style='one-dark'),
+                    fenced_code(),
+                ],
+            )
+        )
+
+        try:
+            lexer = guess_lexer_for_filename(filename, code)
+            code = highlight(
+                code,
+                lexer,
+                HtmlFormatter(
+                    style='one-dark',
+                    linenos='table',
+                    wrapcode=True,
+                ),
+            )
+        except:
+            code = clean_text(code)
+
+        yell = Yell(
+            author_id=user_id,
+            yell_title=title,
+            yell_type='pst',
+        )
+        db.session.add(yell)
+        db.session.flush()
+
+        if tags:
+            tags = [tag.strip() for tag in tags.split(',')]
+            cleaned_tags = []
+            for tag in tags:
+                if len(tag) > 30:
+                    return send_error(
+                        'A tag must not be longer than 30 characters',
+                    )
+                cleaned_tags.append(clean_text(tag))
+            for tag in cleaned_tags:
+                tag_db = Tag(
+                    original_yell_id=yell.yell_id,
+                    tag_content=tag,
+                )
+                db.session.add(tag_db)
+                db.session.flush()
+
+        db.session.add(
+            Post(
+                base_yell_id=yell.yell_id,
+                post_description=description,
+                post_code=code,
+                post_filename=filename,
+            )
+        )
+        db.session.commit()
+
+        return redirect(url_for('index'))
+    else:
+        return render_template(
+            'post.html',
+            current_user=current_user,
+        )
+
+
+# }}}
+
+
+@app.route('/create/request', methods=['GET', 'POST'])  # {{{
+@login_required
+def post_request():
+
+    if request.method == 'POST':
+        send_error = lambda warning: render_template(
+            'post.html',
+            warning=warning,
+            current_user=current_user,
+            title=title or '',
+            description=description or '',
             filename=filename or '',
             code=code or '',
         )
@@ -347,6 +511,7 @@ def post():
             )
 
         title = clean(title)
+        filename = clean_text(filename)
         description = clean(
             markdown(
                 description,
@@ -356,7 +521,6 @@ def post():
                 ],
             )
         )
-        filename = clean_text(filename)
 
         try:
             lexer = guess_lexer_for_filename(filename, code)
@@ -381,7 +545,7 @@ def post():
         db.session.flush()
         db.session.add(
             Post(
-                original_yell_id=yell.yell_id,
+                base_yell_id=yell.yell_id,
                 post_description=description,
                 post_code=code,
                 post_filename=filename,
@@ -400,22 +564,8 @@ def post():
 # }}}
 
 
-@app.route('/create/request', methods=['GET', 'POST'])  # {{{
-@login_required
-def post_request():
-    if request.method == 'POST':
-        return render_template('post_request.html')
-    else:
-        return render_template(
-            'request.html',
-            current_user=current_user,
-        )
-
-
-# }}}
-
-
 @app.route('/yell/<yell_id>')  # {{{
+@login_required
 def get_yell(yell_id):
     if yell_id == 'last':
         query = db.session.execute(
@@ -434,12 +584,47 @@ def get_yell(yell_id):
     match (query.yell_type):
         case 'pst':
             post = db.session.execute(
-                db.select(Post).filter_by(original_yell_id=query.yell_id)
+                db.select(Post).filter_by(base_yell_id=query.yell_id)
             ).scalar()
+            if not post:
+                return '404'
             return jsonify(
                 yell_id=query.yell_id,
-                author=db.session.get(User, query.author_id).username,
                 yell_title=query.yell_title,
+                author=query.author.username,
+                yell_rating=query.yell_rating,
+                yell_datetime=query.yell_datetime.isoformat(),
+                yell_type=query.yell_type,
+                post_code=post.post_code,
+                post_description=post.post_description,
+                post_filename=post.post_filename,
+            )
+
+        case 'req':
+            req = db.session.execute(
+                db.select(Request).filter_by(base_yell_id=query.yell_id)
+            ).scalar()
+            if not req:
+                return '404'
+            return jsonify(
+                # yell_id=query.yell_id,
+                yell_title=query.yell_title,
+                author=query.author.username,
+                yell_rating=query.yell_rating,
+                yell_datetime=query.yell_datetime.isoformat(),
+                yell_type=query.yell_type,
+                request_content=req.request_content,
+            )
+        case 'com':
+            post = db.session.execute(
+                db.select(Post).filter_by(base_yell_id=query.yell_id)
+            ).scalar()
+            if not post:
+                return '404'
+            return jsonify(
+                # yell_id=query.yell_id,
+                yell_title=query.yell_title,
+                author=query.author.username,
                 yell_rating=query.yell_rating,
                 yell_type=query.yell_type,
                 yell_datetime=query.yell_datetime.isoformat(),
@@ -447,10 +632,6 @@ def get_yell(yell_id):
                 post_description=post.post_description,
                 post_filename=post.post_filename,
             )
-
-        case 'req':
-            return 'balls'
-
         case _:
             return '404'
     # except:
@@ -458,6 +639,7 @@ def get_yell(yell_id):
 
 
 @sock.route('/yell/search/<searched>')  # {{{
+@login_required
 def get_yell_multi(ws, searched):
     all = db.session.execute(db.select(Yell)).scalars().all()
     threshold = 80
@@ -474,17 +656,44 @@ def get_yell_multi(ws, searched):
 
         temp_dict[query.yell_id] = 0
 
-        post = db.session.execute(
-            db.select(Post).filter_by(original_yell_id=query.yell_id)
-        ).scalar()
-        eval = [
-            post.post_description,
-            post.post_code,
-            post.post_filename,
-            query.yell_title,
-        ]
+        match (query.yell_type):
+            case 'pst':
+                post = db.session.execute(
+                    db.select(Post).filter_by(base_yell_id=query.yell_id)
+                ).scalar()
+                if not post:
+                    return '404'
+                eval = [
+                    post.post_description,
+                    post.post_code,
+                    post.post_filename,
+                    query.author.username,
+                    query.yell_datetime,
+                    query.yell_rating,
+                    query.yell_title,
+                ]
+            case 'req':
+                req = db.session.execute(
+                    db.select(Request).filter_by(base_yell_id=query.yell_id)
+                ).scalar()
+                if not req:
+                    return '404'
+                eval = [
+                    req.request_content,
+                    query.author.username,
+                    query.yell_datetime,
+                    query.yell_rating,
+                    query.yell_title,
+                ]
+            case 'com':
+                # TODO: maybe implement
+                continue
+            case _:
+                continue
         for idx, item in enumerate(eval):
-            ratio = fuzz.ratio(str(searched), str(item))
+            ratio = fuzz.WRatio(
+                str(searched), str(item), processor=utils.default_process
+            )
             temp_dict[query.yell_id] += ratio * idx
         temp_dict[query.yell_id] /= len(eval)
         if temp_dict[query.yell_id] < threshold:
@@ -506,6 +715,15 @@ def send_temp_dict(ws, temp_dict):
 
 
 # }}}
+
+
+@app.route('/tags/<yell_id>')
+@login_required
+def get_tags(yell_id):
+    tags = db.session.execute(
+        db.select(Tag).filter_by(original_yell_id=yell_id)
+    ).scalars()
+    return jsonify(tags)
 
 
 if __name__ == '__main__':

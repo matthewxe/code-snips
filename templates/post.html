@@ -30,6 +30,15 @@
 		<sub>Note: You can use <a href="https://www.markdownguide.org/">markdown</a> formatting</sub>
 	</div>
 </div>
+<div class="card container-md p-3 mb-3">
+	<h3>Tags</h3>
+	<p>Write some tags to make your post easier to lookup</p>
+	<input form="form" type="text" name="tags" class="form-control"
+		placeholder="E.g. pythonic, sorting, binary search, funny" value="{{ tags }}">
+	<div>
+		<sub>Write tags seperated by commas</sub>
+	</div>
+</div>
 <div class="card container-md p-3 mb">
 	<div class="text-center">
 		<div class="d-flex justify-content-spaced-evenly">
@@ -49,12 +58,10 @@
 	</div>
 	<div class="input-group mb-3"></div>
 	<div class="card fs-5">
-		<!-- <span style="display: absolute; z-index: 1"></span> -->
 		<div id="ace-editor" class="fs-5">{{ code }}</div>
 	</div>
-	<script src="../static/js/require.js"></script>
 </div>
-<div class="m-5 justify-content-end d-flex">
+<div class="m-5 justify-content-center d-flex">
 	<button id="submit_button" name="code" form="form" class="w-25 text-center btn btn-primary mb-5"
 		type="submit">Post</button>
 </div>

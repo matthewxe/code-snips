@@ -115,7 +115,7 @@ async function create_card(json) {
 async function add_card_byid(id, div = main) {
 	// console.log("request for post", id);
 	const get = await get_yell(id);
-	if (get == 404) {
+	if (get == "404") {
 		// console.log("failed request for post", id);
 		return 404;
 	}
@@ -125,17 +125,17 @@ async function add_card_byid(id, div = main) {
 	// console.log("completed request for post", id);
 }
 
-async function add_card_bydict(dict) {
-	// console.log("request for post", dict["yell_title"]);
-	if (dict == 404) {
-		return;
-	}
-
-	const card = await create_card(dict);
-	// console.log(card);
-	main.appendChild(card);
-	// console.log("completed request for post", dict["yell_title"]);
-}
+// async function add_card_bydict(dict) {
+// 	// console.log("request for post", dict["yell_title"]);
+// 	if (dict == '404') {
+// 		return;
+// 	}
+//
+// 	const card = await create_card(dict);
+// 	// console.log(card);
+// 	main.appendChild(card);
+// 	// console.log("completed request for post", dict["yell_title"]);
+// }
 
 async function wait_for_scroll() {
 	return new Promise((resolve) =>
@@ -180,10 +180,8 @@ function stop_spinner() {
 export {
 	get_yell,
 	add_card_byid,
-	add_card_bydict,
+	// add_card_bydict,
 	create_card,
 	main_func,
 	stop_spinner,
 };
-
-// main();
