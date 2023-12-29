@@ -323,6 +323,7 @@ def discover():
 
 
 # }}}
+
 @app.route('/requests')  # {{{
 def requests():
     return render_template(
@@ -403,10 +404,10 @@ def post():
                 'Filenames must be atleast 3 characters long and a maximum of 50',
             )
 
-        title = clean_text(title)
-        filename = clean_text(filename)
+        clean_title = clean_text(title)
+        clean_filename = clean_text(filename)
 
-        description = markdown(
+        clean_description = markdown(
             clean(description),
             extensions=[
                 codehilite(pygments_style='one-dark'),
@@ -416,7 +417,7 @@ def post():
 
         try:
             lexer = guess_lexer_for_filename(filename, code)
-            code = highlight(
+            clean_code = highlight(
                 code,
                 lexer,
                 HtmlFormatter(
@@ -426,11 +427,11 @@ def post():
                 ),
             )
         except:
-            code = clean_text(code)
+            clean_code = clean_text(code)
 
         yell = Yell(
             author_id=user_id,
-            yell_title=title,
+            yell_title=clean_title,
             yell_type='pst',
         )
         db.session.add(yell)
@@ -438,7 +439,7 @@ def post():
 
         if tags:
             cleaned_tags = {tag.strip() for tag in tags.split(',')}
-            if len(tags) > 10:
+            if len(cleaned_tags) > 10:
                 return send_error(
                     'Tags should not go above 10',
                 )
@@ -461,9 +462,9 @@ def post():
         db.session.add(
             Post(
                 base_yell_id=yell.yell_id,
-                post_description=description,
-                post_code=code,
-                post_filename=filename,
+                post_description=clean_description,
+                post_code=clean_code,
+                post_filename=clean_filename,
             )
         )
         db.session.commit()
@@ -514,8 +515,8 @@ def req():
                 'Description must be atleast 3 characters long and a maximum of 1000',
             )
 
-        title = clean_text(title)
-        content = markdown(
+        clean_title = clean_text(title)
+        clean_content = markdown(
             clean(content),
             extensions=[
                 codehilite(pygments_style='one-dark'),
@@ -525,7 +526,7 @@ def req():
 
         yell = Yell(
             author_id=user_id,
-            yell_title=title,
+            yell_title=clean_title,
             yell_type='req',
         )
         db.session.add(yell)
@@ -533,7 +534,7 @@ def req():
 
         if tags:
             cleaned_tags = {tag.strip() for tag in tags.split(',')}
-            if len(tags) > 10:
+            if len(cleaned_tags) > 10:
                 return send_error(
                     'Tags should not go above 10',
                 )
@@ -556,7 +557,7 @@ def req():
         db.session.add(
             Request(
                 base_yell_id=yell.yell_id,
-                request_content=content,
+                request_content=clean_content,
             )
         )
         db.session.commit()
