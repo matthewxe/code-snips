@@ -2,7 +2,7 @@
  
 python -m venv ./venv
 source ./venv/bin/activate
-pip install --upgrade pip
+# pip install --upgrade pip
 pip install nodeenv
 nodeenv -p
 npm i --prefix ./static/npm/ bootstrap@4.3.2
