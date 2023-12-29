@@ -476,17 +476,20 @@ def get_yell_multi(ws, searched):
                     break
 
         temp_dict[query.yell_id] = 0
+
+        post = db.session.execute(
+            db.select(Pst).filter_by(original_yell_id=query.yell_id)
+        ).scalar()
         eval = [
-            query.yell_datetime,
-            query.yell_description,
-            query.yell_code,
-            query.yell_filename,
+            post.post_description,
+            post.post_code,
+            post.post_filename,
             query.yell_title,
         ]
         for idx, item in enumerate(eval):
             ratio = fuzz.ratio(str(searched), str(item))
             temp_dict[query.yell_id] += ratio * idx
-        temp_dict[query.yell_id] /= 5
+        temp_dict[query.yell_id] /= len(eval)
         if temp_dict[query.yell_id] < threshold:
             temp_dict.pop(query.yell_id)
     send_temp_dict(ws, temp_dict)
