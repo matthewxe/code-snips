@@ -421,7 +421,6 @@ def post():
                 code,
                 lexer,
                 HtmlFormatter(
-                    cssclass='highlight',
                     style='one-dark',
                     linenos='table',
                     wrapcode=True,
