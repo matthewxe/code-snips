@@ -73,7 +73,7 @@ class Yell(db.Model):
     yell_rating = db.Column(db.Float, nullable=False, default=0)
     yell_type = db.Column(db.String(3), nullable=False)
     yell_datetime = db.Column(
-        db.DateTime, nullable=False, default=datetime.utcnow().isoformat
+        db.DateTime, nullable=False, default=datetime.utcnow()
     )
 
     def __repr__(self):
@@ -124,7 +124,7 @@ class Comment(db.Model):
     comment_datetime = db.Column(
         db.DateTime,
         nullable=False,
-        default=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+        default=datetime.utcnow(),
     )
 
     def __repr__(self):
@@ -445,7 +445,7 @@ def get_yell(yell_id):
                 yell_title=query.yell_title,
                 yell_rating=query.yell_rating,
                 yell_type=query.yell_type,
-                yell_datetime=query.yell_datetime,
+                yell_datetime=query.yell_datetime.isoformat(),
                 post_code=post.post_code,
                 post_description=post.post_description,
                 post_filename=post.post_filename,
