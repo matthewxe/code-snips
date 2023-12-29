@@ -1,9 +1,7 @@
-/* Pygments One Dark style */
-
 pre {
+  line-height: 125%;
   padding: 0.5em;
   font-size: 1rem;
-  line-height: 150%;
   background-color: #282c34;
   /* font-family: "Fira Code"; */
 }

@@ -417,15 +417,16 @@ def post():
 
         try:
             lexer = guess_lexer_for_filename(filename, code)
-            clean_code = highlight(
+            clean_code = clean( highlight(
                 code,
                 lexer,
                 HtmlFormatter(
+                    cssclass='highlight',
                     style='one-dark',
                     linenos='table',
                     wrapcode=True,
                 ),
-            )
+            ) )
         except:
             clean_code = clean_text(code)
 
@@ -519,10 +520,11 @@ def req():
         clean_content = markdown(
             clean(content),
             extensions=[
-                codehilite(pygments_style='one-dark'),
+                codehilite(css_class='highlight', pygments_style='one-dark'),
                 fenced_code(),
             ],
         )
+
 
         yell = Yell(
             author_id=user_id,
