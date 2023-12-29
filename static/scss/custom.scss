@@ -40,7 +40,8 @@
 @import "../npm/node_modules/bootstrap/scss/transitions";
 @import "../npm/node_modules/bootstrap/scss/alert";
 @import "../npm/node_modules/bootstrap/scss/spinners";
-@import "../npm/node_modules/bootstrap/scss/close";
+@import "../npm/node_modules/bootstrap/scss/badge";
+// @import "../npm/node_modules/bootstrap/scss/close";
 
 // 7. Optionally include utilities API last to generate classes based on the Sass map in `_utilities.scss`
 @import "../npm/node_modules/bootstrap/scss/utilities/api";
