@@ -407,25 +407,26 @@ def post():
         clean_title = clean_text(title)
         clean_filename = clean_text(filename)
 
-        clean_description = markdown(
+        clean_description = clean( markdown(
             clean(description),
             extensions=[
                 codehilite(css_class='highlight', pygments_style='one-dark'),
                 fenced_code(),
             ],
-        )
+        ) )
 
         try:
             lexer = guess_lexer_for_filename(filename, code)
-            clean_code = clean( highlight(
+            clean_code = highlight(
                 code,
                 lexer,
                 HtmlFormatter(
+                    cssclass='highlight',
                     style='one-dark',
                     linenos='table',
                     wrapcode=True,
                 ),
-            ) )
+            )
         except:
             clean_code = clean_text(code)
 
