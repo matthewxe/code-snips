@@ -5,7 +5,7 @@ const next = document.getElementById("next");
 const socket = new WebSocket("ws://" + location.host + "/yell/search/" + query);
 
 socket.addEventListener("message", (ev) => {
-	console.log(ev.data);
+	// console.log(ev.data);
 	if (ev.data === "404") {
 		stop_spinner();
 		socket.removeEventListener("message", self);
