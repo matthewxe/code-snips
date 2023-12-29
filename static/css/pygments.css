@@ -2,11 +2,10 @@
 
 pre {
   padding: 0.5em;
-  line-height: 125%;
   font-size: 1rem;
-  line-height: 125%;
+  line-height: 150%;
   background-color: #282c34;
-  font-family: "Fira Code";
+  /* font-family: "Fira Code"; */
 }
 
 td.linenos .normal {
