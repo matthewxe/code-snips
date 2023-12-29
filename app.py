@@ -31,13 +31,11 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
-    Float,
     Text,
     Boolean,
 )
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from typing import List
-from secrets import token_urlsafe, SystemRandom
 
 # Print decorators
 LOG = '\033[100;92mLOG ::'
@@ -91,11 +89,13 @@ class Yell(db.Model):
     )
     author: Mapped['User'] = relationship()
     yell_title: Mapped[str] = mapped_column(String(100), nullable=False)
-    yell_rating: Mapped[float] = mapped_column(Float, default=0)
     yell_type: Mapped[str] = mapped_column(String(3), nullable=False)
     yell_datetime: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow()
     )
+
+    yell_rating: Mapped[int] = mapped_column(Integer, default=0)
+    yell_comments: Mapped[int] = mapped_column(Integer, default=0)
 
     def __repr__(self):
         return f'<Yell id: {self.yell_id} author: {self.author} title: {self.yell_title}>'
@@ -320,6 +320,17 @@ def discover():
     return render_template(
         'discover.html',
         current_user=current_user,
+        type='discover'
+    )
+
+
+# }}}
+@app.route('/requests')  # {{{
+def requests():
+    return render_template(
+        'discover.html',
+        current_user=current_user,
+        type='request'
     )
 
 
@@ -399,7 +410,7 @@ def post():
         title = clean_text(title)
         filename = clean_text(filename)
 
-        description = clean_text(
+        description = clean(
             markdown(
                 description,
                 extensions=[
@@ -483,19 +494,19 @@ def req():
             warning=warning,
             current_user=current_user,
             title=title or '',
-            filename=filename or '',
+            # filename=filename or '',
             tags=tags or '',
             content=content or '',
         )
         user_id = current_user.get_id()
         title = request.form.get('title')
         tags = request.form.get('tags')
-        filename = request.form.get('filename')
+        # filename = request.form.get('filename')
         content = request.form.get('content')
         if not user_id:
             return redirect(url_for('register'))
-        elif not filename:
-            return send_error('Must have a file name')
+        # elif not filename:
+        #     return send_error('Must have a file name')
         elif not title:
             return send_error('Must provide a title')
         elif not content:
@@ -510,7 +521,7 @@ def req():
             )
 
         title = clean_text(title)
-        content = clean_text(
+        content = clean(
             markdown(
                 content,
                 extensions=[
@@ -646,152 +657,68 @@ def get_yell(yell_id):
             return '404'
     # except:
     #     return '404'   # }}}
-@app.route('/api/post/<yell_id>')  # {{{
+
+
+@app.route('/api/post/<post_id>')  # {{{
 # @login_required
 def get_post(post_id):
-    if yell_id == 'last':
-        query = db.session.execute(
-            db.select(Yell).order_by(Yell.yell_id.desc())
+    if post_id == 'last':
+        post = db.session.execute(
+            db.select(Post).order_by(Post.post_content_id.desc())
         ).scalar()
-    elif yell_id == 'rated':
-        query = db.session.execute(
-            db.select(Yell).order_by(Yell.yell_rating.desc())
+    elif post_id == 'rated':
+        post = db.session.execute(
+            db.select(Post).order_by(Post.base_yell.rating.desc())
         ).scalar()
     else:
-        query = db.session.get(Yell, yell_id)
-        db.session.get
-    if not query:
+        post = db.session.get(Post, post_id)
+    if not post:
         return '404'
 
-    print(query.yell_type)
-    match (query.yell_type):
-        case 'pst':
-            post = db.session.execute(
-                db.select(Post).filter_by(base_yell_id=query.yell_id)
-            ).scalar()
-            if not post:
-                return '404'
-            return jsonify(
-                yell_id=query.yell_id,
-                yell_title=query.yell_title,
-                author=query.author.username,
-                yell_rating=query.yell_rating,
-                yell_datetime=query.yell_datetime.isoformat(),
-                yell_type=query.yell_type,
-                post_code=post.post_code,
-                post_description=post.post_description,
-                post_filename=post.post_filename,
-            )
+    base = post.base_yell
 
-        case 'req':
-            req = db.session.execute(
-                db.select(Request).filter_by(base_yell_id=query.yell_id)
-            ).scalar()
-            if not req:
-                return '404'
-            return jsonify(
-                # yell_id=query.yell_id,
-                yell_title=query.yell_title,
-                author=query.author.username,
-                yell_rating=query.yell_rating,
-                yell_datetime=query.yell_datetime.isoformat(),
-                yell_type=query.yell_type,
-                request_content=req.request_content,
-            )
-        case 'com':
-            post = db.session.execute(
-                db.select(Post).filter_by(base_yell_id=query.yell_id)
-            ).scalar()
-            if not post:
-                return '404'
-            return jsonify(
-                # yell_id=query.yell_id,
-                yell_title=query.yell_title,
-                author=query.author.username,
-                yell_rating=query.yell_rating,
-                yell_type=query.yell_type,
-                yell_datetime=query.yell_datetime.isoformat(),
-                post_code=post.post_code,
-                post_description=post.post_description,
-                post_filename=post.post_filename,
-            )
-        case _:
-            return '404'
-    # except:
-    #     return '404'   # }}}
-@app.route('/api/request/<yell_id>')  # {{{
+    return jsonify(
+        base_id=base.yell_id,
+        base_title=base.yell_title,
+        base_rating=base.yell_rating,
+        base_datetime=base.yell_datetime.isoformat(),
+        # base_type=query.yell_type,
+        author=base.author.username,
+        post_id=post.post_content_id,
+        post_code=post.post_code,
+        post_description=post.post_description,
+        post_filename=post.post_filename,
+    )
+# }}}
+@app.route('/api/request/<request_id>')  # {{{
 # @login_required
 def get_request(request_id):
-    if yell_id == 'last':
-        query = db.session.execute(
-            db.select(Yell).order_by(Yell.yell_id.desc())
+    if request_id == 'last':
+        req = db.session.execute(
+            db.select(Request).order_by(Request.request_content_id.desc())
         ).scalar()
-    elif yell_id == 'rated':
-        query = db.session.execute(
-            db.select(Yell).order_by(Yell.yell_rating.desc())
+    elif request_id == 'rated':
+        req = db.session.execute(
+            db.select(Request).order_by(Request.base_yell.rating.desc())
         ).scalar()
     else:
-        query = db.session.get(Yell, yell_id)
-        db.session.get
-    if not query:
+        req = db.session.get(Request, request_id)
+    if not req:
         return '404'
 
-    print(query.yell_type)
-    match (query.yell_type):
-        case 'pst':
-            post = db.session.execute(
-                db.select(Post).filter_by(base_yell_id=query.yell_id)
-            ).scalar()
-            if not post:
-                return '404'
-            return jsonify(
-                yell_id=query.yell_id,
-                yell_title=query.yell_title,
-                author=query.author.username,
-                yell_rating=query.yell_rating,
-                yell_datetime=query.yell_datetime.isoformat(),
-                yell_type=query.yell_type,
-                post_code=post.post_code,
-                post_description=post.post_description,
-                post_filename=post.post_filename,
-            )
+    base = req.base_yell
 
-        case 'req':
-            req = db.session.execute(
-                db.select(Request).filter_by(base_yell_id=query.yell_id)
-            ).scalar()
-            if not req:
-                return '404'
-            return jsonify(
-                # yell_id=query.yell_id,
-                yell_title=query.yell_title,
-                author=query.author.username,
-                yell_rating=query.yell_rating,
-                yell_datetime=query.yell_datetime.isoformat(),
-                yell_type=query.yell_type,
-                request_content=req.request_content,
-            )
-        case 'com':
-            post = db.session.execute(
-                db.select(Post).filter_by(base_yell_id=query.yell_id)
-            ).scalar()
-            if not post:
-                return '404'
-            return jsonify(
-                # yell_id=query.yell_id,
-                yell_title=query.yell_title,
-                author=query.author.username,
-                yell_rating=query.yell_rating,
-                yell_type=query.yell_type,
-                yell_datetime=query.yell_datetime.isoformat(),
-                post_code=post.post_code,
-                post_description=post.post_description,
-                post_filename=post.post_filename,
-            )
-        case _:
-            return '404'
-    # except:
-    #     return '404'   # }}}
+    return jsonify(
+        base_id=base.yell_id,
+        base_title=base.yell_title,
+        base_rating=base.yell_rating,
+        base_datetime=base.yell_datetime.isoformat(),
+        # base_type=query.yell_type,
+        author=base.author.username,
+        request_id=req.request_content_id,
+        request_content=req.request_content,
+    )
+# }}}
 
 @sock.route('/api/yell/search/<searched>')  # {{{
 # @login_required
@@ -872,7 +799,7 @@ def send_temp_dict(ws, temp_dict):
 # }}}
 
 
-@app.route('/tags/<yell_id>')
+@app.route('/api/tags/<yell_id>')
 # @login_required
 def get_tags(yell_id):
     tags = (

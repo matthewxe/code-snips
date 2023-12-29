@@ -19,6 +19,10 @@
   </div>
   <h5 id="warn">We are sorry if its taking a while, please don't refresh the page.</h5>
 </div>
+{% if type == 'discover' %}
 <script type="module">import {main_discover} from "../static/js/discover.js"; main_discover()</script>
+{% elif type == 'request' %}
+<script type="module">import {main_requests} from "../static/js/discover.js"; main_requests()</script>
+{% endif %}
 <!--   <button id="next" type="button" class="container mx-auto text-center btn btn-primary">Next</button> -->
 {% endblock %}
