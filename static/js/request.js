@@ -3,14 +3,7 @@ const editor = ace.edit("ace-editor", {
 	maxLines: 40,
 	theme: "ace/theme/one_dark",
 	fontFamily: "Fira Code",
-});
-
-const modelist = ace.require("ace/ext/modelist");
-const filename = document.getElementById("filename");
-filename.addEventListener("input", function() {
-	const filePath = filename.value;
-	const mode = modelist.getModeForPath(filePath).mode;
-	editor.session.setMode(mode);
+	mode: "ace/mode/markdown",
 });
 
 const tab_size = document.getElementById("tabSize");
