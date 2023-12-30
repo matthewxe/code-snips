@@ -25,12 +25,20 @@ async function create_base_card(json) {
 	card.className = "bg-body-tertiary card p-3 flex-grow-1";
 	const title_container = document.createElement("div");
 	title_container.className = "d-flex align-middle";
-	const title = document.createElement("h3");
-	title.className = "pe-5 flex-grow-1";
+	const title = document.createElement("a");
+	title.className = "pe-5 flex-grow-1 fs-3 card-title";
 	title.innerHTML = json["base_title"];
+	title.href = json["base_type"] + "/" + json["content_id"];
 
 	title_container.appendChild(title);
 	card.appendChild(title_container);
+	return card;
+} //}}}
+async function create_post_card(json) {
+	//{{{
+	//
+	const post_id = json["content_id"];
+	const card = await create_base_card(json);
 
 	const lower_container = document.createElement("div");
 	lower_container.className = "d-flex h-1";
@@ -47,12 +55,6 @@ async function create_base_card(json) {
 	lower_container.appendChild(made_by);
 	lower_container.appendChild(made_inLang);
 	card.appendChild(lower_container);
-	return card;
-} //}}}
-async function create_post_card(json) {
-	//{{{
-	const post_id = json["post_id"];
-	const card = await create_base_card(json);
 
 	const accordion = document.createElement("div");
 	accordion.className = "accordion";
@@ -132,9 +134,35 @@ async function create_post_card(json) {
 //}}}
 async function create_request_card(json) {
 	//{{{
-	const request_id = json["request_id"];
-	console.log(request_id);
+	const request_id = json["content_id"];
 	const card = await create_base_card(json);
+
+	const lower_container = document.createElement("div");
+	lower_container.className = "d-flex h-1";
+	const made_by = document.createElement("p");
+	made_by.className = "align-middle flex-grow-1";
+	made_by.innerHTML =
+		"Made by " +
+		json["author"] +
+		", " +
+		new Date(json["base_datetime"]).toLocaleString();
+	const made_inLang = document.createElement("p");
+	made_inLang.className = "pe-3 align-middle";
+	const solved = json["request_state"];
+	if (solved == true) {
+		made_inLang.className += " text-secondary";
+		made_inLang.innerHTML = "Solved";
+	}
+	if (solved == false) {
+		made_inLang.className += " text-success";
+		made_inLang.innerHTML = "Open";
+	} else {
+		made_inLang.className += " text-secondary";
+		made_inLang.innerHTML = "Unknown";
+	}
+	lower_container.appendChild(made_by);
+	lower_container.appendChild(made_inLang);
+	card.appendChild(lower_container);
 
 	const accordion = document.createElement("div");
 	accordion.className = "accordion";
@@ -150,7 +178,7 @@ async function create_request_card(json) {
 	body_header_button.dataset.bsTarget = "#accordionPanelbody" + request_id;
 	body_header_button.ariaExpanded = "true";
 	body_header_button.ariaControls = "accordionPanelbody" + request_id;
-	body_header_button.innerHTML = "Body";
+	body_header_button.innerHTML = "Request";
 	body_header.appendChild(body_header_button);
 	body.appendChild(body_header);
 
@@ -169,7 +197,7 @@ async function create_request_card(json) {
 	card.appendChild(accordion);
 	return card;
 } //}}}
-async function add_card_byid(id, type = yell, div = main) {
+async function add_card_byid(id, type = "yell", div = main) {
 	console.log("request for post", id);
 	const get = await get_api(id, type);
 	if (get == "404") {
@@ -181,13 +209,15 @@ async function add_card_byid(id, type = yell, div = main) {
 	}
 	console.log(type);
 	switch (type) {
-		case "post":
 		case "pst":
+		case "post":
+			get["base_type"] = "post";
 			var card = await create_post_card(get);
 			div.appendChild(card);
 			return;
-		case "request":
 		case "req":
+		case "request":
+			get["base_type"] = "request";
 			var card = await create_request_card(get);
 			div.appendChild(card);
 			break;
@@ -212,32 +242,7 @@ async function wait_for_scroll() {
 		}),
 	);
 }
-
-async function main_discover() {
-	const get = await get_api("last", "post");
-
-	const warn = document.getElementById("warn");
-	const spinner = document.getElementById("spinner");
-	const showtext = setTimeout(() => {
-		warn.style.display = "block";
-	}, 7000);
-
-	function stop_spinner() {
-		clearTimeout(showtext);
-		spinner.style.display = "none";
-		warn.style.display = "block";
-		warn.innerHTML = "No more results";
-	}
-	for (var index = get["post_id"]; index > 0; index--) {
-		if (index % 15 == 0) {
-			await wait_for_scroll();
-		}
-		add_card_byid(index, "post");
-	}
-	stop_spinner();
-}
-
-async function main_requests() {
+async function main_func(type) {
 	const get = await get_api("last", "request");
 
 	const warn = document.getElementById("warn");
@@ -253,13 +258,13 @@ async function main_requests() {
 		warn.innerHTML = "No more results";
 	}
 	console.log(get);
-	for (var index = get["request_id"]; index > 0; index--) {
+	for (var index = get["content_id"]; index > 0; index--) {
 		if (index % 15 == 0) {
 			await wait_for_scroll();
 		}
-		add_card_byid(index, "request");
+		add_card_byid(index, type);
 	}
 	stop_spinner();
 }
 
-export { get_api, add_card_byid, main_discover, main_requests };
+export { get_api, add_card_byid, main_func };

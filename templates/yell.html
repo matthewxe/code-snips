@@ -1,0 +1,47 @@
+{% extends "template.html" %}
+{% block head %}
+<link href="../static/css/pygments.css" rel="stylesheet" />{% endblock %}
+{% block body %}
+{% if warning %}<div class="w-50 mx-auto mt-5 alert alert-danger" role="alert">{{ warning }}</div>{% endif %}
+<div id="main" class="m-3">
+	<h1 class="ps-4">{{ yell_type.title() }}</h1>
+	<div id="main_spinner" class="d-flex flex-wrap container-md justify-content-evenly mt-3 gap-3">
+		<div class="spinner-grow" role="status">
+			<span class="visually-hidden">Loading...</span>
+		</div>
+	</div>
+</div>
+<hr>
+<div id="comments" class="m-3">
+	<h1 class="ps-4">Comments</h1>
+	{% if current_user.is_authenticated %}
+	<p>
+		Commenting as <span class="text-primary">{{ current_user.username }}</span>
+		<br>
+		<sub>You can use <a href="https://www.markdownguide.org/cheat-sheet/">Markdown</a> formatting</sub>
+	</p>
+	<div class="px-1">
+		<form id="comment_form" method="post">
+			<textarea required rows="5" minlength="3" maxlength="1000" form="comment_form" name="comment_content"
+				class="form-control" placeholder="What do you say?" id="floatingDescription">{{ comment_content }}</textarea>
+			<div class="justify-content-end d-flex p-1">
+				<button id="submit_button" name="code" form="comment_form" class="text-center btn btn-primary"
+					type="submit">Comment</button>
+			</div>
+		</form>
+	</div>
+	{% else %}
+	<span>You must be logged in to comment</span>
+	{% endif %}
+	<hr>
+	<div id="comments_spinner" class="d-flex flex-wrap container-md justify-content-evenly mt-3 gap-3">
+		<div class="spinner-grow" role="status">
+			<span class="visually-hidden">Loading...</span>
+		</div>
+	</div>
+</div>
+<script type="module">
+	import {main} from "../static/js/yell.js";
+	main('{{yell_type}}', {{id}});
+</script>
+{% endblock %}

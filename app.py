@@ -33,6 +33,7 @@ from sqlalchemy import (
     String,
     Text,
     Boolean,
+    inspect,
 )
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from typing import List
@@ -40,8 +41,6 @@ from typing import List
 # Print decorators
 LOG = '\033[100;92mLOG ::'
 END = '\033[0m'
-
-
 # Flask Setup {{{
 app = Flask(__name__)
 sock = Sock(app)
@@ -57,7 +56,6 @@ bcrypt = Bcrypt(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 # }}}
-
 # Flask-SQLAlchemy Database{{{
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
@@ -123,7 +121,8 @@ class Request(db.Model):
     )
     base_yell: Mapped['Yell'] = relationship()
     request_content_id: Mapped[int] = mapped_column(primary_key=True)
-    request_content: Mapped[str] = mapped_column(db.Text, nullable=False)
+    request_content: Mapped[str] = mapped_column(Text, nullable=False)
+    request_state: Mapped[bool] = mapped_column(Boolean, default=False)
 
     def __repr__(self):
         return f'<Request id: {self.request_content_id} content: {self.request_content}>'
@@ -139,6 +138,7 @@ class CommentSet(db.Model):
 
 
 class Comment(db.Model):
+    __tablename__ = 'comment_table'
     comment_id: Mapped[int] = mapped_column(primary_key=True)
     comment_set_id: Mapped[int] = mapped_column(
         ForeignKey('comment_set_table.comment_set_id'), nullable=False
@@ -148,6 +148,10 @@ class Comment(db.Model):
     )
     base_yell: Mapped['Yell'] = relationship()
     comment_content: Mapped[str] = mapped_column(String(5000), nullable=False)
+
+    # thanks rubber duck
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
     def __repr__(self):
         return f'<Comment id: {self.comment_id} author: {self.base_yell.author} content: {self.comment_content}>'
@@ -182,8 +186,6 @@ class Rating(db.Model):
 with app.app_context():
     db.create_all()
 # }}}
-
-
 # Other{{{
 @login_manager.user_loader
 def load_user(id):
@@ -197,8 +199,6 @@ def page_not_found(error):
 
 
 # }}}
-
-
 @app.route('/')  # {{{
 def index():
     # print(current_user.is_authenticated)
@@ -208,8 +208,6 @@ def index():
 
 
 # }}}
-
-
 @app.route('/register', methods=['GET', 'POST'])  # {{{
 def register():
     if request.method == 'POST':
@@ -263,11 +261,18 @@ def register():
         db.session.add(User(username=username, hash=hash))
         db.session.commit()
 
-        return redirect(url_for('login'))
-    elif current_user.is_anonymous:
-        return render_template('register.html')
+        # elif current_user.is_anonymous:
+        #     return render_template('register.html')
+        prev = request.form.get('prev')
+        if prev:
+            return redirect('/login?prev=' + prev)
+        else:
+            return redirect(url_for('login'))
     else:
-        return redirect(url_for('index'))  # }}}
+        return render_template('register.html', prev=request.args.get('prev'))
+        # return redirect(url_for('index'))
+
+        # }}}
 
 
 @app.route('/login', methods=['GET', 'POST'])  # {{{
@@ -298,32 +303,35 @@ def login():
             return send_error('Wrong password')
 
         login_user(query)
-        return redirect(url_for('index'))
+        prev = request.form.get('prev')
+        if prev:
+            return redirect(prev)
+        else:
+            return redirect(url_for('index'))
     else:
-        return render_template('login.html')
+        return render_template('login.html', prev=request.args.get('prev'))
 
 
 # }}}
-
-
 @app.route('/logout')  # {{{
 def logout():
     logout_user()
-    return redirect(url_for('index'))
+    prev = request.args.get('prev')
+    if prev:
+        return redirect(prev)
+    else:
+        return redirect(url_for('index'))
 
 
 # }}}
-
-
 @app.route('/discover')  # {{{
 def discover():
     return render_template(
-        'discover.html', current_user=current_user, type='discover'
+        'discover.html', current_user=current_user, type='post'
     )
 
 
 # }}}
-
 @app.route('/requests')  # {{{
 def requests():
     return render_template(
@@ -332,8 +340,6 @@ def requests():
 
 
 # }}}
-
-
 @app.route('/search')  # {{{
 def search():
     return render_template(
@@ -344,8 +350,6 @@ def search():
 
 
 # }}}
-
-
 @app.route('/create')  # {{{
 def create_menu():
     return render_template(
@@ -355,8 +359,6 @@ def create_menu():
 
 
 # }}}
-
-
 @app.route('/create/post', methods=['GET', 'POST'])  # {{{
 @login_required
 def post():
@@ -426,7 +428,7 @@ def post():
                     linenos='table',
                     wrapcode=True,
                 ),
-            ) 
+            )
         except:
             clean_code = clean_text(code)
 
@@ -468,6 +470,12 @@ def post():
                 post_filename=clean_filename,
             )
         )
+
+        db.session.add(
+            CommentSet(
+                original_yell_id=yell.yell_id,
+            )
+        )
         db.session.commit()
 
         return redirect(url_for('index'))
@@ -479,8 +487,6 @@ def post():
 
 
 # }}}
-
-
 @app.route('/create/request', methods=['GET', 'POST'])  # {{{
 @login_required
 def req():
@@ -525,7 +531,6 @@ def req():
             ],
         )
 
-
         yell = Yell(
             author_id=user_id,
             yell_title=clean_title,
@@ -562,6 +567,11 @@ def req():
                 request_content=clean_content,
             )
         )
+        db.session.add(
+            CommentSet(
+                original_yell_id=yell.yell_id,
+            )
+        )
         db.session.commit()
 
         return redirect(url_for('index'))
@@ -573,6 +583,95 @@ def req():
 
 
 # }}}
+# /<any(post, request):yell_type>/<id>  {{{
+# Thanks cs50.ai for the route tricks
+@app.route(
+    '/<any(post, request, comment):yell_type>/<id>', methods=['GET', 'POST']
+)
+def yell_page(yell_type, id):
+    if request.method == 'POST':
+        send_error = lambda warning: render_template(
+            'yell.html',
+            warning=warning,
+            yell_type=yell_type,
+            id=id,
+            current_user=current_user,
+            comment=comment,
+        )
+        user_id = current_user.get_id()
+        if not user_id:
+            return send_error('You must be logged in')
+        comment = request.form.get('comment_content')
+        if not comment:
+            return send_error('Cannot send blank comment')
+        elif not len(comment) >= 3 or not len(comment) <= 1000:
+            return send_error(
+                'Comments must be atleast 3 characters long and a maximum of 1000',
+            )
+        comment = markdown(
+            clean(comment),
+            extensions=[
+                codehilite(css_class='highlight', pygments_style='one-dark'),
+                fenced_code(),
+            ],
+        )
+
+        match (yell_type):
+            case 'post':
+                data = db.session.get(Post, id)
+            case 'request':
+                data = db.session.get(Request, id)
+            case 'comment':
+                data = db.session.get(Comment, id)
+            case _:
+                return send_error(
+                    'Something went wrong, please report this error, CODE: 1'
+                )
+
+        if not data:
+            return send_error(
+                'Something went wrong, please report this error, CODE: 3'
+            )
+
+        print(LOG, data.base_yell.yell_comments, END)
+        db.session.execute( db.update(Yell).filter_by(yell_id=data.base_yell_id).values(yell_comments=data.base_yell.yell_comments + 1) )
+        print(LOG, data.base_yell.yell_comments, END)
+        commentset = db.session.execute(
+            db.select(CommentSet).filter_by(original_yell_id=data.base_yell_id)
+        ).scalar()
+        if not commentset:
+            return send_error(
+                'Something went wrong, please report this error, CODE:2'
+            )
+
+        yell = Yell(
+            author_id=user_id,
+            yell_title='',
+            yell_type='com',
+        )
+        db.session.add(yell)
+        db.session.flush()
+
+        db.session.add(
+            CommentSet(
+                original_yell_id=yell.yell_id,
+            )
+        )
+        db.session.add(
+            Comment(
+                base_yell_id=yell.yell_id,
+                comment_set_id=commentset.comment_set_id,
+                comment_content=comment,
+            )
+        )
+
+        db.session.commit()
+        return redirect(request.url)
+
+    else:
+        return render_template(
+            'yell.html', yell_type=yell_type, id=id, current_user=current_user
+        )  # }}}
 
 
 @app.route('/api/yell/<yell_id>')  # {{{
@@ -607,7 +706,7 @@ def get_yell(yell_id):
                 base_datetime=base.yell_datetime.isoformat(),
                 base_type=base.yell_type,
                 author=base.author.username,
-                post_id=post.post_content_id,
+                content_id=post.post_content_id,
                 post_code=post.post_code,
                 post_description=post.post_description,
                 post_filename=post.post_filename,
@@ -626,7 +725,7 @@ def get_yell(yell_id):
                 base_datetime=base.yell_datetime.isoformat(),
                 base_type=base.yell_type,
                 author=base.author.username,
-                request_id=req.request_content_id,
+                content_id=req.request_content_id,
                 request_content=req.request_content,
             )
         case 'com':
@@ -653,6 +752,7 @@ def get_yell(yell_id):
 
 
 @app.route('/api/post/<post_id>')  # {{{
+@app.route('/api/pst/<post_id>')
 # @login_required
 def get_post(post_id):
     if post_id == 'last':
@@ -674,10 +774,11 @@ def get_post(post_id):
         base_id=base.yell_id,
         base_title=base.yell_title,
         base_rating=base.yell_rating,
+        base_comments=base.yell_rating,
         base_datetime=base.yell_datetime.isoformat(),
         # base_type=query.yell_type,
         author=base.author.username,
-        post_id=post.post_content_id,
+        content_id=post.post_content_id,
         post_code=post.post_code,
         post_description=post.post_description,
         post_filename=post.post_filename,
@@ -686,6 +787,7 @@ def get_post(post_id):
 
 # }}}
 @app.route('/api/request/<request_id>')  # {{{
+@app.route('/api/req/<request_id>')
 # @login_required
 def get_request(request_id):
     if request_id == 'last':
@@ -707,17 +809,74 @@ def get_request(request_id):
         base_id=base.yell_id,
         base_title=base.yell_title,
         base_rating=base.yell_rating,
+        base_comments=base.yell_rating,
         base_datetime=base.yell_datetime.isoformat(),
         # base_type=query.yell_type,
         author=base.author.username,
-        request_id=req.request_content_id,
+        content_id=req.request_content_id,
         request_content=req.request_content,
+        request_state=req.request_state,
     )
 
 
 # }}}
+@app.route('/api/commentset/<yell_id>')  # {{{
+# @login_required
+def get_commentset(yell_id):
+    commentset = db.session.execute(
+        db.select(CommentSet).filter_by(original_yell_id=yell_id)
+    ).scalar()
+    if not commentset:
+        return '404'
+
+    comments = [c.to_dict() for c in commentset.comment]
+
+    return jsonify(
+        original_yell_id=commentset.original_yell_id,
+        comment_set_id=commentset.comment_set_id,
+        comments=comments,
+    )
 
 
+# }}}
+@app.route('/api/comment/<comment_id>')  # {{{
+# @login_required
+def get_comment(comment_id):
+    comment = db.session.get(Comment, comment_id)
+    if not comment:
+        return '404'
+
+    base = comment.base_yell
+
+    return jsonify(
+        base_id=base.yell_id,
+        base_title=base.yell_title,
+        base_rating=base.yell_rating,
+        base_comments=base.yell_rating,
+        base_datetime=base.yell_datetime.isoformat(),
+        author=base.author.username,
+        content_id=comment.comment_id,
+        comment_set_id=comment.comment_set_id,
+        comment_content=comment.comment_content,
+    )
+
+
+# }}}
+@app.route('/api/tags/<yell_id>')  # {{{
+# @login_required
+def get_tags(yell_id):
+    tags = (
+        db.session.execute(db.select(Tag).filter_by(original_yell_id=yell_id))
+        .scalars()
+        .all()
+    )
+    if not tags:
+        return '404'
+    tags = [tag.tag_content for tag in tags]
+    return jsonify(tags)
+
+
+# }}}
 @sock.route('/api/yell/search/<searched>')  # {{{
 # @login_required
 def get_yell_multi(ws, searched):
@@ -795,20 +954,6 @@ def send_temp_dict(ws, temp_dict):
 
 
 # }}}
-
-
-@app.route('/api/tags/<yell_id>')
-# @login_required
-def get_tags(yell_id):
-    tags = (
-        db.session.execute(db.select(Tag).filter_by(original_yell_id=yell_id))
-        .scalars()
-        .all()
-    )
-    if not tags:
-        return '404'
-    tags = [tag.tag_content for tag in tags]
-    return jsonify(tags)
 
 
 if __name__ == '__main__':
