@@ -13,6 +13,7 @@ socket.addEventListener("message", (ev) => {
 		socket.removeEventListener("message", self);
 		return "shitass";
 	}
+	// console.log(ev.data);
 	add_card_byid(ev.data);
 });
 
