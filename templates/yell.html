@@ -3,16 +3,16 @@
 <link href="/static/css/pygments.css" rel="stylesheet" />{% endblock %}
 {% block body %}
 {% if warning %}<div class="w-50 mx-auto mt-5 alert alert-danger" role="alert">{{ warning }}</div>{% endif %}
-<div id="main" class="m-3 px-md-5">
+<div id="main" class="m-3 px-lg-5">
 	<h1 class="ps-4">{{ yell_type.title() }}</h1>
-	<div id="main_spinner" class="d-flex flex-wrap container-md justify-content-evenly mt-3 gap-3">
+	<div id="main_spinner" class="d-flex flex-wrap container-lg justify-content-evenly mt-3 gap-3">
 		<div class="spinner-grow" role="status">
 			<span class="visually-hidden">Loading...</span>
 		</div>
 	</div>
 </div>
 <hr>
-<div id="comments" class="m-3 px-md-5">
+<div id="comments" class="m-3 px-lg-5">
 	<h1 class="ps-4">Comments</h1>
 	{% if current_user.is_authenticated %}
 	<p>
@@ -34,7 +34,7 @@
 	<span>You must be logged in to comment</span>
 	{% endif %}
 	<hr>
-	<div id="comments_spinner" class="d-flex flex-wrap container-md justify-content-evenly mt-3 gap-3">
+	<div id="comments_spinner" class="d-flex flex-wrap container-lg justify-content-evenly mt-3 gap-3">
 		<div class="spinner-grow" role="status">
 			<span class="visually-hidden">Loading...</span>
 		</div>

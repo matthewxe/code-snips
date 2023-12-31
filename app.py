@@ -832,7 +832,7 @@ def report_yell(yell_type, id):
         user_id = current_user.get_id()
         report = request.form.get('report')
         if not user_id or current_user.is_authenticated != True:
-            return redirect(url_for(f'login?prev=/{yell_type}/{id}/report'))
+            return redirect(f"/login?prev=/{yell_type}/{id}/report")
         elif not report:
             return send_error('Must provide a report')
         elif not len(report) >= 3 or not len(report) <= 1000:
@@ -856,7 +856,7 @@ def report_yell(yell_type, id):
             return send_error(
                 'Something went wrong, please report this error, CODE: 4',
             )
-        original_yell_id = data.original_yell_id
+        original_yell_id = data.base_yell_id
 
         reported = Report(original_yell_id=original_yell_id,report=report,reporter_id=user_id)
         db.session.add(reported)

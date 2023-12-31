@@ -47,7 +47,7 @@ function create_base_card(json) {
 	report_a.innerHTML = "Report " + json["base_type"];
 	report.appendChild(report_a);
 
-	console.log(json["owned"]);
+	// console.log(json["owned"]);
 	if (json["owned"] == true) {
 		if (json["base_type"] == "request") {
 			const mark = document.createElement("li");
@@ -204,7 +204,7 @@ function create_request_card(json) {
 	const made_inLang = document.createElement("p");
 	made_inLang.className = "ps-1 pe-3 align-middle";
 	const solved = json["request_state"];
-	console.log(solved);
+	// console.log(solved);
 	if (solved == true) {
 		made_inLang.className += " text-secondary";
 		made_inLang.innerHTML = "Solved";
