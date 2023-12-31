@@ -270,9 +270,9 @@ def register():
             return redirect(url_for('login'))
     else:
         return render_template('register.html', prev=request.args.get('prev'))
-        # return redirect(url_for('index'))
 
-        # }}}
+
+# }}}
 @app.route('/login', methods=['GET', 'POST'])  # {{{
 @login_manager.unauthorized_handler
 def login():
@@ -675,18 +675,19 @@ def yell_page(yell_type, id):
     else:
         return render_template(
             'yell.html', yell_type=yell_type, id=id, current_user=current_user
-        )  # }}}
+        )
+
+
+# }}}
 # /<any(post, request):yell_type>/<id>/<rate_type>  {{{
 @app.route(
-    '/<any(post, request, comment):yell_type>/<id>/<any(like, unlike, status):rate_type>',
-    methods=['GET', 'POST'],
+    '/<any(post, request, comment):yell_type>/<id>/<any(like, unlike):rate_type>',
+    
 )
 def do_rate(yell_type, id, rate_type):
     critic_id = current_user.get_id()
-    if not critic_id and not rate_type == 'status':
+    if not critic_id:
         return 'unlogged'
-    # if rate_type != 'like' or rate_type != 'unlike':
-    #     return 'invalid_type'
 
     match (yell_type):
         case 'post':
@@ -698,9 +699,20 @@ def do_rate(yell_type, id, rate_type):
         case _:
             return '404'
     original_yell_id = data.base_yell_id
+
+
+    if rate_type == 'status':
+        rating = db.session.execute(
+            db.select(Rating).filter_by(
+                original_yell_id=original_yell_id
+            )
+        ).scalar()
+        return str(rating.rating)
+
+
     rating = db.session.execute(
         db.select(Rating).filter_by(
-            original_yell_id=original_yell_id, critic_id=critic_id
+            original_yell_id=original_yell_id, critic_id=int(critic_id)
         )
     ).scalar()
     if not rating:
@@ -710,7 +722,9 @@ def do_rate(yell_type, id, rate_type):
             return 'False'
         rate_type == 'like'
         new_rating = Rating(
-            original_yell_id=original_yell_id, rating=True, critic_id=critic_id
+            original_yell_id=original_yell_id,
+            rating=True,
+            critic_id=(critic_id),
         )
         db.session.add(new_rating)
         db.session.execute(
@@ -728,7 +742,7 @@ def do_rate(yell_type, id, rate_type):
                         db.update(Rating)
                         .filter_by(
                             original_yell_id=original_yell_id,
-                            critic_id=critic_id,
+                            critic_id=int(critic_id),
                         )
                         .values(rating=False)
                     )
@@ -746,7 +760,7 @@ def do_rate(yell_type, id, rate_type):
                         db.update(Rating)
                         .filter_by(
                             original_yell_id=original_yell_id,
-                            critic_id=critic_id,
+                            critic_id=int(critic_id),
                         )
                         .values(rating=True)
                     )
@@ -755,49 +769,119 @@ def do_rate(yell_type, id, rate_type):
                         .filter_by(yell_id=original_yell_id)
                         .values(yell_rating=Yell.yell_rating + 1)
                     )
-        elif rate_type == 'status':
-            return str(rating.rating)
     db.session.commit()
     return 'yay'
 
 
 # }}}
-# /<any(post, request):yell_type>/<id>/report  {{{
-@app.route( '/<any(post, request, comment):yell_type>/<id>/report', methods=['GET', 'POST'],)
+# /<any(post, request):yell_type>/<id>/status  {{{
+@app.route('/<any(post, request, comment):yell_type>/<id>/status')
+def rate_status(yell_type, id):
+    critic_id = current_user.get_id()
+    if not critic_id:
+        return 'False'
+
+    match (yell_type):
+        case 'post':
+            data = db.session.get(Post, id)
+        case 'request':
+            data = db.session.get(Request, id)
+        case 'comment':
+            data = db.session.get(Comment, id)
+        case _:
+            return '404'
+
+    if not data:
+        return 'False'
+
+    original_yell_id = data.base_yell_id
+    rating = db.session.execute(
+        db.select(Rating).filter_by(
+            original_yell_id=original_yell_id, critic_id=int(critic_id)
+        )
+    ).scalar()
+    if not rating:
+        return 'False'
+    return str(rating.rating)
+
+
+# }}}
+# /<any(post, request, comment):yell_type>/<id>/report  {{{
+@app.route(
+    '/<any(post, request, comment):yell_type>/<id>/report',
+    methods=['GET', 'POST'],
+)
 def report_yell(yell_type, id):
-    if request.method == "POST":
-        return redirect("/" + yell_type + "/" + id)
-    return 'yay'
+    if request.method == 'POST':
+
+        return redirect('/' + yell_type + '/' + id)
+    else:
+        user_id = current_user.get_id()
+        if not user_id or current_user.is_authenticated == False:
+            return redirect(f"/login?prev=/{yell_type}/{id}/report")
+        return render_template('report.html', current_user=current_user)
 
 
 # }}}
-# /<any(post, request):yell_type>/<id>/delete  {{{
-@app.route(
-    '/<any(post, request, comment):yell_type>/<id>/delete',
-    methods=['GET', 'POST'],
-)
-def delete_yell(yell_type, id, report):
-    return 'yay'
+# # /<any(post, request, comment):yell_type>/<id>/delete  {{{
+# @app.route(
+#     '/<any(post, request, comment):yell_type>/<id>/delete',
+#     methods=['GET', 'POST'],
+# )
+# def delete_yell(yell_type, id, report):
+#     return 'yay'
+#
+#
+# # }}}
+# # /<any(post, request, comment):yell_type>/<id>/edit  {{{
+# @app.route(
+#     '/<any(post, request, comment):yell_type>/<id>/edit',
+#     methods=['GET', 'POST'],
+# )
+# def edit_yell(yell_type, id):
+#     match (yell_type):
+#         case 'post':
+#             data = db.session.get(Post, id)
+#         case 'request':
+#             data = db.session.get(Request, id)
+#         case 'comment':
+#             data = db.session.get(Comment, id)
+#         case _:
+#             return send_error(
+#                 'Something went wrong, please report this error, CODE: 1'
+#             )
+#
+#     if not data:
+#         return send_error(
+#             'Something went wrong, please report this error, CODE: 3'
+#         )
+#     return 'yay'
+#
+#
+# # }}}
+@app.route('/request/<id>/mark')   # {{{
+def mark_yell(id):
+    critic_id = current_user.get_id()
+    if not critic_id:
+        return 'not logged in'
+    data = db.session.get(Request, id)
+    if not data:
+        return 'request does not exist'
 
+    if not critic_id == data.base_yell.author_id:
+        return 'failed'
 
-# }}}
-# /<any(post, request):yell_type>/<id>/edit  {{{
-@app.route(
-    '/<any(post, request, comment):yell_type>/<id>/edit',
-    methods=['GET', 'POST'],
-)
-def edit_yell(yell_type, id, report):
-    return 'yay'
+    print(data.request_state)
+    print(not data.request_state)
+    shit = not data.request_state
+    db.session.execute(
+        db.update(Request)
+        .filter_by(request_content_id=data.request_content_id)
+        .values(request_state=shit)
+    )
+    db.session.commit()
 
-
-# }}}
-# /<any(post, request):yell_type>/<id>/mark  {{{
-@app.route(
-    '/<any(post, request, comment):yell_type>/<id>/mark',
-    methods=['GET', 'POST'],
-)
-def mark_yell(yell_type, id, report):
-    return 'yay'
+    return redirect('/request/' + id)
 
 
 # }}}
@@ -851,6 +935,10 @@ def get_post(post_id):
         return '404'
 
     base = post.base_yell
+    if current_user.is_authenticated == False:
+        owned = False
+    else:
+        owned = base.author.id == int(current_user.get_id())
 
     return jsonify(
         base_id=base.yell_id,
@@ -860,7 +948,7 @@ def get_post(post_id):
         base_datetime=base.yell_datetime.isoformat(),
         base_type=base.yell_type,
         author=base.author.username,
-        owned=base.author.id == current_user.get_id(),
+        owned=owned,
         content_id=post.post_content_id,
         post_code=post.post_code,
         post_description=post.post_description,
@@ -896,6 +984,10 @@ def get_request(request_id):
 
     base = req.base_yell
 
+    if current_user.is_authenticated == False:
+        owned = False
+    else:
+        owned = base.author.id == int(current_user.get_id())
     return jsonify(
         base_id=base.yell_id,
         base_title=base.yell_title,
@@ -904,7 +996,7 @@ def get_request(request_id):
         base_datetime=base.yell_datetime.isoformat(),
         base_type=base.yell_type,
         author=base.author.username,
-        owned=base.author.id == current_user.get_id(),
+        owned=owned,
         content_id=req.request_content_id,
         request_content=req.request_content,
         request_state=req.request_state,
@@ -944,6 +1036,10 @@ def get_comment(comment_id):
 
     base = comment.base_yell
 
+    if current_user.is_authenticated == False:
+        owned = False
+    else:
+        owned = base.author.id == int(current_user.get_id())
     return jsonify(
         base_id=base.yell_id,
         base_title=base.yell_title,
@@ -952,7 +1048,7 @@ def get_comment(comment_id):
         base_datetime=base.yell_datetime.isoformat(),
         base_type=base.yell_type,
         author=base.author.username,
-        owned=base.author.id == current_user.get_id(),
+        owned=owned,
         content_id=comment.comment_id,
         comment_set_id=comment.comment_set_id,
         comment_content=comment.comment_content,
