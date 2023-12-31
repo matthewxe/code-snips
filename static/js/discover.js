@@ -2,7 +2,7 @@ const main = document.getElementById("main");
 
 async function get_api(id, type = "yell") {
 	const result = await fetch("/api/" + type + "/" + id);
-	return await result.json();
+	return result.json();
 }
 
 async function append_tags(title, id) {
@@ -19,7 +19,7 @@ async function append_tags(title, id) {
 	}
 }
 
-async function create_base_card(json) {
+function create_base_card(json) {
 	//{{{
 	var card = document.createElement("div");
 	card.className = "bg-body-tertiary card p-3 flex-grow-1";
@@ -34,11 +34,11 @@ async function create_base_card(json) {
 	card.appendChild(title_container);
 	return card;
 } //}}}
-async function create_post_card(json) {
+function create_post_card(json) {
 	//{{{
 	//
 	const post_id = json["content_id"];
-	const card = await create_base_card(json);
+	const card = create_base_card(json);
 
 	const lower_container = document.createElement("div");
 	lower_container.className = "d-flex h-1";
@@ -130,29 +130,13 @@ async function create_post_card(json) {
 	accordion.appendChild(code);
 	card.appendChild(accordion);
 
-	if (json["base_comments"] > 0) {
-		const replies_div = document.createElement("div");
-
-		const replies = document.createElement("a");
-		replies.innerHTML = "Comments ";
-		replies.className = "btn btn-secondary mt-3";
-		replies.href = json["base_type"] + "/" + json["content_id"];
-
-		const badge = document.createElement("span");
-		badge.innerHTML = json["base_comments"];
-		badge.className = "badge bg-body-secondary";
-		replies.appendChild(badge);
-		replies_div.appendChild(replies);
-		card.appendChild(replies_div);
-	}
-
 	return card;
 }
 //}}}
-async function create_request_card(json) {
+function create_request_card(json) {
 	//{{{
 	const request_id = json["content_id"];
-	const card = await create_base_card(json);
+	const card = create_base_card(json);
 
 	const lower_container = document.createElement("div");
 	lower_container.className = "d-flex h-1";
@@ -213,25 +197,10 @@ async function create_request_card(json) {
 	accordion.appendChild(body);
 
 	card.appendChild(accordion);
-	if (json["base_comments"] > 0) {
-		const replies_div = document.createElement("div");
-
-		const replies = document.createElement("a");
-		replies.innerHTML = "Comments ";
-		replies.className = "btn btn-secondary mt-3";
-		replies.href = json["base_type"] + "/" + json["content_id"];
-
-		const badge = document.createElement("span");
-		badge.innerHTML = json["base_comments"];
-		badge.className = "badge bg-body-secondary";
-		replies.appendChild(badge);
-		replies_div.appendChild(replies);
-		card.appendChild(replies_div);
-	}
 
 	return card;
 } //}}}
-async function create_comment(json) {
+function create_comment(json) {
 	const comment = document.createElement("div"); //{{{
 	comment.className = "bg-body-tertiary card p-3 mb-3";
 	const title_container = document.createElement("div");
@@ -256,30 +225,36 @@ async function create_comment(json) {
 	content.href = "/comment" + "/" + json["content_id"];
 	comment.appendChild(content);
 
-	if (json["base_comments"] > 0) {
-		const replies_div = document.createElement("div");
-
-		const replies = document.createElement("a");
-		replies.innerHTML = "Replies ";
-		const badge = document.createElement("span");
-		badge.innerHTML = json["base_comments"];
-		badge.className = "badge bg-body-secondary";
-		replies.className = "btn btn-secondary";
-		replies.href = "/comment" + "/" + json["content_id"];
-		replies.appendChild(badge);
-
-		replies_div.appendChild(replies);
-		comment.appendChild(replies_div);
-	}
-
 	return comment;
 } //}}}
+function create_footer(json) {
+	const footer = document.createElement("div"); //{{{
 
+	const replies = document.createElement("a");
+	if (json["base_type"] == "comment") {
+		replies.innerHTML = "Replies";
+	} else {
+		replies.innerHTML = "Comments";
+	}
+
+	replies.className = "btn btn-dark mt-1 btn-sm";
+	replies.href = json["base_type"] + "/" + json["content_id"];
+
+	if (json["base_comments"] > 0) {
+		const badge = document.createElement("span");
+		badge.innerHTML = json["base_comments"];
+		badge.className = "ms-1 badge bg-body-tertiary";
+		replies.appendChild(badge);
+	}
+	footer.appendChild(replies);
+	return footer;
+}
+//}}}
 async function add_card_byid(id, type = "yell", div = main) {
-	// console.log("request for post", id);
+	// console.log("request for post", id);{{{
 	const get = await get_api(id, type);
 	if (get == "404") {
-		// console.log("failed request for post", id);
+		console.log("failed request for post", id, type);
 		return "404";
 	}
 	console.log(get);
@@ -289,30 +264,33 @@ async function add_card_byid(id, type = "yell", div = main) {
 		case "pst":
 		case "post":
 			get["base_type"] = "post";
-			var card = await create_post_card(get);
-			div.appendChild(card);
-			return;
+			var card = create_post_card(get);
+			break;
 		case "req":
 		case "request":
 			get["base_type"] = "request";
-			var card = await create_request_card(get);
-			div.appendChild(card);
+			var card = create_request_card(get);
 			break;
 		case "com":
 		case "comment":
 			get["base_type"] = "comment";
-			var card = await create_comment(get);
-			div.appendChild(card);
+			var card = create_comment(get);
 			break;
 		default:
 			console.log("unkown type", type);
 			return "404";
 	}
 
+	var footer = create_footer(get);
+	card.appendChild(footer);
+	div.appendChild(card);
+	return;
+
 	// console.log("completed request for post", id);
 }
-
+//}}}
 async function wait_for_scroll() {
+	//{{{
 	return new Promise((resolve) =>
 		window.addEventListener("scroll", () => {
 			window.removeEventListener("scroll", self);
@@ -325,8 +303,21 @@ async function wait_for_scroll() {
 			} else return window.addEventListener("scroll", self);
 		}),
 	);
-}
+} //}}}
 async function main_func(type) {
+	const warn = document.getElementById("warn");
+	const spinner = document.getElementById("spinner");
+	const showtext = setTimeout(() => {
+		warn.style.display = "block";
+	}, 7000);
+
+	function stop_spinner() {
+		clearTimeout(showtext);
+		spinner.style.display = "none";
+		warn.style.display = "block";
+		warn.innerHTML = "No more results";
+	}
+
 	const get = await get_api("last", type);
 
 	for (var index = get["content_id"]; index > 0; index--) {
@@ -338,17 +329,4 @@ async function main_func(type) {
 	stop_spinner();
 }
 
-const warn = document.getElementById("warn");
-const spinner = document.getElementById("spinner");
-const showtext = setTimeout(() => {
-	warn.style.display = "block";
-}, 7000);
-
-function stop_spinner() {
-	clearTimeout(showtext);
-	spinner.style.display = "none";
-	warn.style.display = "block";
-	warn.innerHTML = "No more results";
-}
-
-export { get_api, add_card_byid, main_func, stop_spinner, create_comment };
+export { get_api, add_card_byid, main_func };

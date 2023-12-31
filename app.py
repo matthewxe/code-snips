@@ -675,6 +675,26 @@ def yell_page(yell_type, id):
             'yell.html', yell_type=yell_type, id=id, current_user=current_user
         )  # }}}
 
+# /<any(post, request):yell_type>/<id>/<rate>  {{{
+@app.route( '/<any(post, request, comment):yell_type>/<id>/<rate>', methods=['POST']
+)
+# @login_required
+def do_rate(yell_type, id, rate_type):
+    if not bool( rate_type ):
+        return '404'
+    # user_id = current_user.get_id()
+    # if not user_id:
+    #     redirect('/login?prev=' + '/' + yell_type + '/' + id)
+    #
+    # tags = yell
+    # if not tags:
+    #     return '404'
+    # tags = [tag.tag_content for tag in tags]
+    # return jsonify(tags)
+
+    return 'ass'
+
+# }}}
 
 @app.route('/api/yell/<yell_id>')  # {{{
 def get_yell(yell_id):
@@ -682,7 +702,6 @@ def get_yell(yell_id):
         base = db.session.execute(
             db.select(Yell).order_by(Yell.yell_id.desc())
         ).scalar()
-        print(base)
     elif yell_id == 'rated':
         base = db.session.execute(
             db.select(Yell).order_by(Yell.yell_rating.desc())
@@ -690,13 +709,11 @@ def get_yell(yell_id):
     else:
         base = db.session.get(Yell, yell_id)
 
-
     if not base:
         return '404'
 
 
-    print(LOG,base, "again", END)
-
+    print(LOG, base.yell_type, END)
     match (base.yell_type):
         case 'pst':
             return get_post(base.yell_id)
@@ -713,7 +730,6 @@ def get_yell(yell_id):
 @app.route('/api/pst/<post_id>')
 # @login_required
 def get_post(post_id):
-    print(LOG, 'post', END)
     if post_id == 'last':
         post = db.session.execute(
             db.select(Post).order_by(Post.post_content_id.desc())
@@ -724,6 +740,8 @@ def get_post(post_id):
         ).scalar()
     else:
         post = db.session.get(Post, post_id)
+        if not post:
+            post = db.session.execute(db.select(Post).filter_by(base_yell_id=post_id)).scalar()
     if not post:
         return '404'
 
@@ -749,21 +767,25 @@ def get_post(post_id):
 @app.route('/api/req/<request_id>')
 # @login_required
 def get_request(request_id):
-    print(LOG, request_id, END)
+    print(request_id)
     if request_id == 'last':
         req = db.session.execute(
             db.select(Request).order_by(Request.request_content_id.desc())
         ).scalar()
+
+        print(LOG, 'if get_request', req, END)
     elif request_id == 'rated':
         req = db.session.execute(
             db.select(Request).order_by(Request.base_yell.rating.desc())
         ).scalar()
+        print(LOG, 'elif get_request', req, END)
     else:
         req = db.session.get(Request, request_id)
+        if not req:
+            req = db.session.execute(db.select(Request).filter_by(base_yell_id=request_id)).scalar()
+
     if not req:
         return '404'
-
-    print(LOG, req, END)
 
     base = req.base_yell
 
@@ -804,10 +826,11 @@ def get_commentset(yell_id):
 @app.route('/api/comment/<comment_id>')  # {{{
 # @login_required
 def get_comment(comment_id):
-    print(LOG, 'comment', END)
     comment = db.session.get(Comment, comment_id)
     if not comment:
-        return '404'
+        comment = db.session.execute(db.select(Comment).filter_by(base_yell_id=comment_id)).scalar()
+        if not comment:
+            return '404'
 
     base = comment.base_yell
 

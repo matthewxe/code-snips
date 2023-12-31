@@ -1,4 +1,17 @@
-import { add_card_byid, stop_spinner } from "./discover.js";
+import { add_card_byid } from "./discover.js";
+
+const warn = document.getElementById("warn");
+const spinner = document.getElementById("spinner");
+const showtext = setTimeout(() => {
+	warn.style.display = "block";
+}, 7000);
+
+function stop_spinner() {
+	clearTimeout(showtext);
+	spinner.style.display = "none";
+	warn.style.display = "block";
+	warn.innerHTML = "No more results";
+}
 
 const query = document.getElementById("searchup").dataset["query"];
 // const next = document.getElementById("next");
