@@ -13,15 +13,17 @@
   <meta content="https://gravitationally.online/favicon.ico" property="og:image" />
   <meta content="#6610f2 " data-react-helmet="true" name="theme-color" />
   <!-- Bootstrap -->
-  <link rel="stylesheet" href="../static/css/bootstrap.css" />
-  <script defer src="../static/npm/node_modules/@popperjs/core/dist/umd/popper.min.js"></script>
-  <script defer src="../static/npm/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.css" />
+  <script type="application/javascript" defer
+    src="/static/npm/node_modules/@popperjs/core/dist/umd/popper.min.js"></script>
+  <script type="application/javascript" defer
+    src="/static/npm/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
   <title>
     {% block title %} {% endblock %} Yällo! The friendly code snippet sharing
     site
   </title>
-  <link rel="shortcut icon" href="../static/img/favicon.ico" />
-  <link href="../static/css/styles.css" rel="stylesheet" />
+  <link rel="shortcut icon" href="/static/img/favicon.ico" />
+  <link href="/static/css/styles.css" type="text/css" rel="stylesheet" />
   {% block head %} {% endblock %}
 </head>
 
@@ -71,7 +73,7 @@
         <a class="nav-link me-2 accounted" href="/register">Register</a>
         <a class="nav-link accounted" href="/login">Log in</a>
         {% endif %}
-        <script>
+        <script type="application/javascript">
           accounted_link = document.getElementsByClassName("accounted");
           for (var index = 0; index < accounted_link.length; index++) {
             accounted_link[index].href += "?prev=" + window.location.pathname;
