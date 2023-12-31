@@ -916,7 +916,7 @@ def mark_yell(id):
     if not data:
         return 'request does not exist'
 
-    if not critic_id == data.base_yell.author_id:
+    if int(critic_id) != int( data.base_yell.author_id):
         return 'failed'
 
 
