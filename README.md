@@ -1,6 +1,6 @@
 # Yällo!
 #### Video Demo: https://youtu.be/N6QyHvpMC0k
-#### A code sharing solution that allows users to share and request code with a clean and intuitive look
+#### Description: A code sharing solution that allows users to share and request code with a clean and intuitive look
 #### Currently now live at: https://gravitationally.online
 
 ### Share code solutions with other programmers
