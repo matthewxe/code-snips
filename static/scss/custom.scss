@@ -32,7 +32,6 @@
 @import "../npm/node_modules/bootstrap/scss/helpers";
 @import "../npm/node_modules/bootstrap/scss/buttons";
 @import "../npm/node_modules/bootstrap/scss/forms";
-@import "../npm/node_modules/bootstrap/scss/helpers";
 @import "../npm/node_modules/bootstrap/scss/navbar";
 @import "../npm/node_modules/bootstrap/scss/nav";
 @import "../npm/node_modules/bootstrap/scss/card";
@@ -46,5 +45,6 @@
 
 // 7. Optionally include utilities API last to generate classes based on the Sass map in `_utilities.scss`
 @import "../npm/node_modules/bootstrap/scss/utilities/api";
+@import "../npm/node_modules/bootstrap/scss/helpers/position";
 
 // 8. Add additional custom code here

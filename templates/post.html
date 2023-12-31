@@ -7,62 +7,64 @@
 {% endblock %}
 {% block title %}Create Post -{% endblock %}
 {% block body %}
-<h1 class="mt-3 text-center">Post</h1>
-{% if warning %}<div class="w-50 mx-auto mt-5 alert alert-danger" role="alert">{{ warning }}</div>{% endif %}
-<form id="form" action="/create/post" method="post" class="needs-validation" novalidate>
-</form>
-<div class="card container-md p-3 mb-3">
-	<h3>Title</h3>
-	<input required minlength="3" maxlength="100" class="form-control" type="text" name="title" form="form"
-		placeholder="A concise title of the program" id="titleform" value="{{ title }}">
-</div>
-<div class="card container-md p-3 mb-3">
-	<h3>Description</h3>
-	<p>
-		Write something that could be used in conjunction with code comments to guide peoople to understanding your
-		solution
-		or about your program
-	</p>
-	<div class="form-floating">
-		<textarea required minlength="3" maxlength="1000" form="form" name="description" class="form-control"
-			placeholder="Add a description" id="floatingDescription">{{ description }}</textarea>
-		<label for="floatingDescription">Description</label>
-		<sub>Note: You can use <a href="https://www.markdownguide.org/cheat-sheet/">Markdown</a> formatting</sub>
+<div class="m-3 px-md-5">
+	<h1 class="mt-3 text-center">Post</h1>
+	{% if warning %}<div class="w-50 mx-auto mt-5 alert alert-danger" role="alert">{{ warning }}</div>{% endif %}
+	<form id="form" action="/create/post" method="post" class="needs-validation" novalidate>
+	</form>
+	<div class="card container-md p-3 mb-3">
+		<h3>Title</h3>
+		<input required minlength="3" maxlength="100" class="form-control" type="text" name="title" form="form"
+			placeholder="A concise title of the program" id="titleform" value="{{ title }}">
 	</div>
-</div>
-<div class="card container-md p-3 mb-3">
-	<h3>Tags</h3>
-	<p>Write some tags to make your post easier to lookup</p>
-	<input form="form" type="text" name="tags" class="form-control"
-		placeholder="E.g. pythonic, sorting, binary search, funny" value="{{ tags }}">
-	<div>
-		<sub>Write tags seperated by commas</sub>
-	</div>
-</div>
-<div class="card container-md p-3 mb">
-	<div class="text-center">
-		<div class="d-flex justify-content-spaced-evenly">
-			<div class="flex-grow-1 me-2">
-				<input required minlength="3" maxlength="50 " id="filename" form="form" name="filename" placeholder="Filename"
-					class="form-control w-3 mb" value="{{ filename }}">
-			</div>
-			<div>
-				<select id="tabSize" class="form-select w-3 me-auto">
-					<option disabled selected>Tab Size</option>
-					<option value=2>2</option>
-					<option value=4>4</option>
-					<option value=8>8</option>
-				</select>
-			</div>
+	<div class="card container-md p-3 mb-3">
+		<h3>Description</h3>
+		<p>
+			Write something that could be used in conjunction with code comments to guide peoople to understanding your
+			solution
+			or about your program
+		</p>
+		<div class="form-floating">
+			<textarea required minlength="3" maxlength="1000" form="form" name="description" class="form-control"
+				placeholder="Add a description" id="floatingDescription">{{ description }}</textarea>
+			<label for="floatingDescription">Description</label>
+			<sub>Note: You can use <a href="https://www.markdownguide.org/cheat-sheet/">Markdown</a> formatting</sub>
 		</div>
 	</div>
-	<div class="input-group mb-3"></div>
-	<div class="card fs-5">
-		<div id="ace-editor" class="fs-5">{{ code }}</div>
+	<div class="card container-md p-3 mb-3">
+		<h3>Tags</h3>
+		<p>Write some tags to make your post easier to lookup</p>
+		<input form="form" type="text" name="tags" class="form-control"
+			placeholder="E.g. pythonic, sorting, binary search, funny" value="{{ tags }}">
+		<div>
+			<sub>Write tags seperated by commas</sub>
+		</div>
 	</div>
-</div>
-<div class="m-5 justify-content-center d-flex">
-	<button id="submit_button" name="code" form="form" class="w-25 text-center btn btn-primary mb-5"
-		type="submit">Post</button>
+	<div class="card container-md p-3 mb">
+		<div class="text-center">
+			<div class="d-flex justify-content-spaced-evenly">
+				<div class="flex-grow-1 me-2">
+					<input required minlength="3" maxlength="50 " id="filename" form="form" name="filename" placeholder="Filename"
+						class="form-control w-3 mb" value="{{ filename }}">
+				</div>
+				<div>
+					<select id="tabSize" class="form-select w-3 me-auto">
+						<option disabled selected>Tab Size</option>
+						<option value=2>2</option>
+						<option value=4>4</option>
+						<option value=8>8</option>
+					</select>
+				</div>
+			</div>
+		</div>
+		<div class="input-group mb-3"></div>
+		<div class="card fs-5">
+			<div id="ace-editor" class="fs-5">{{ code }}</div>
+		</div>
+	</div>
+	<div class="m-5 justify-content-center d-flex">
+		<button id="submit_button" name="code" form="form" class="w-25 text-center btn btn-primary mb-5"
+			type="submit">Post</button>
+	</div>
 </div>
 {% endblock %}

@@ -148,7 +148,7 @@ function create_request_card(json) {
 		", " +
 		new Date(json["base_datetime"]).toLocaleString();
 	const made_inLang = document.createElement("p");
-	made_inLang.className = "pe-3 align-middle";
+	made_inLang.className = "ps-1 pe-3 align-middle";
 	const solved = json["request_state"];
 	if (solved == true) {
 		made_inLang.className += " text-secondary";
