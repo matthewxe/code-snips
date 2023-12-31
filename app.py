@@ -273,8 +273,6 @@ def register():
         # return redirect(url_for('index'))
 
         # }}}
-
-
 @app.route('/login', methods=['GET', 'POST'])  # {{{
 @login_manager.unauthorized_handler
 def login():
@@ -309,7 +307,11 @@ def login():
         else:
             return redirect(url_for('index'))
     else:
-        return render_template('login.html', warning=request.args.get('warning'), prev=request.args.get('prev'))
+        return render_template(
+            'login.html',
+            warning=request.args.get('warning'),
+            prev=request.args.get('prev'),
+        )
 
 
 # }}}
@@ -674,78 +676,14 @@ def yell_page(yell_type, id):
         return render_template(
             'yell.html', yell_type=yell_type, id=id, current_user=current_user
         )  # }}}
-
-# /<any(post, request):yell_type>/<id>/<rate>  {{{
-@app.route( '/<any(post, request, comment):yell_type>/<id>/<any(like, unlike, status):rate_type>', methods=["GET", 'POST']
-)
-def do_rate(yell_type, id, rate_type):
-    critic_id = current_user.get_id()
-    if not critic_id and not rate_type == "status":
-        return 'unlogged'
-    # if rate_type != 'like' or rate_type != 'unlike':
-    #     return 'invalid_type'
-
-    match (yell_type):
-        case 'post':
-            data = db.session.get(Post, id)
-        case 'request':
-            data = db.session.get(Request, id)
-        case 'comment':
-            data = db.session.get(Comment, id)
-        case _:
-            return '404'
-    original_yell_id = data.base_yell_id
-    rating = db.session.execute(db.select(Rating).filter_by(original_yell_id=original_yell_id, critic_id=critic_id)).scalar()
-    if not rating:
-        if rate_type == 'unlike':
-            return 'false_unlike'
-        elif rate_type == 'status':
-            return 'False'
-        rate_type == 'like'
-        new_rating = Rating(original_yell_id=original_yell_id, rating=True, critic_id=critic_id)
-        db.session.add(new_rating)
-        db.session.execute(
-            db.update(Yell).filter_by(yell_id=original_yell_id).values(yell_rating=Yell.yell_rating + 1)
-        )
-    else:
-        if rate_type == 'unlike':
-            match (rating.rating):
-                case False:
-                    return 'already_unliked'
-                case True:
-                    db.session.execute(
-                        db.update(Rating)
-                        .filter_by(original_yell_id=original_yell_id, critic_id=critic_id)
-                        .values(rating=False)
-                    )
-                    db.session.execute(
-                        db.update(Yell).filter_by(yell_id=original_yell_id).values(yell_rating=Yell.yell_rating - 1)
-                    )
-        elif rate_type == 'like':
-            match (rating.rating):
-                case True:
-                    return 'already_liked'
-                case False:
-                    db.session.execute(
-                        db.update(Rating)
-                        .filter_by(original_yell_id=original_yell_id, critic_id=critic_id)
-                        .values(rating=True)
-                    )
-                    db.session.execute(
-                        db.update(Yell).filter_by(yell_id=original_yell_id).values(yell_rating=Yell.yell_rating + 1)
-                    )
-        elif rate_type == 'status':
-            return str( rating.rating )
-    db.session.commit()
-    return 'yay'
-
-# }}}
 # /<any(post, request):yell_type>/<id>/<rate_type>  {{{
-@app.route( '/<any(post, request, comment):yell_type>/<id>/<any(like, unlike, status):rate_type>', methods=["GET", 'POST']
+@app.route(
+    '/<any(post, request, comment):yell_type>/<id>/<any(like, unlike, status):rate_type>',
+    methods=['GET', 'POST'],
 )
 def do_rate(yell_type, id, rate_type):
     critic_id = current_user.get_id()
-    if not critic_id and not rate_type == "status":
+    if not critic_id and not rate_type == 'status':
         return 'unlogged'
     # if rate_type != 'like' or rate_type != 'unlike':
     #     return 'invalid_type'
@@ -760,17 +698,25 @@ def do_rate(yell_type, id, rate_type):
         case _:
             return '404'
     original_yell_id = data.base_yell_id
-    rating = db.session.execute(db.select(Rating).filter_by(original_yell_id=original_yell_id, critic_id=critic_id)).scalar()
+    rating = db.session.execute(
+        db.select(Rating).filter_by(
+            original_yell_id=original_yell_id, critic_id=critic_id
+        )
+    ).scalar()
     if not rating:
         if rate_type == 'unlike':
             return 'false_unlike'
         elif rate_type == 'status':
             return 'False'
         rate_type == 'like'
-        new_rating = Rating(original_yell_id=original_yell_id, rating=True, critic_id=critic_id)
+        new_rating = Rating(
+            original_yell_id=original_yell_id, rating=True, critic_id=critic_id
+        )
         db.session.add(new_rating)
         db.session.execute(
-            db.update(Yell).filter_by(yell_id=original_yell_id).values(yell_rating=Yell.yell_rating + 1)
+            db.update(Yell)
+            .filter_by(yell_id=original_yell_id)
+            .values(yell_rating=Yell.yell_rating + 1)
         )
     else:
         if rate_type == 'unlike':
@@ -780,11 +726,16 @@ def do_rate(yell_type, id, rate_type):
                 case True:
                     db.session.execute(
                         db.update(Rating)
-                        .filter_by(original_yell_id=original_yell_id, critic_id=critic_id)
+                        .filter_by(
+                            original_yell_id=original_yell_id,
+                            critic_id=critic_id,
+                        )
                         .values(rating=False)
                     )
                     db.session.execute(
-                        db.update(Yell).filter_by(yell_id=original_yell_id).values(yell_rating=Yell.yell_rating - 1)
+                        db.update(Yell)
+                        .filter_by(yell_id=original_yell_id)
+                        .values(yell_rating=Yell.yell_rating - 1)
                     )
         elif rate_type == 'like':
             match (rating.rating):
@@ -793,19 +744,63 @@ def do_rate(yell_type, id, rate_type):
                 case False:
                     db.session.execute(
                         db.update(Rating)
-                        .filter_by(original_yell_id=original_yell_id, critic_id=critic_id)
+                        .filter_by(
+                            original_yell_id=original_yell_id,
+                            critic_id=critic_id,
+                        )
                         .values(rating=True)
                     )
                     db.session.execute(
-                        db.update(Yell).filter_by(yell_id=original_yell_id).values(yell_rating=Yell.yell_rating + 1)
+                        db.update(Yell)
+                        .filter_by(yell_id=original_yell_id)
+                        .values(yell_rating=Yell.yell_rating + 1)
                     )
         elif rate_type == 'status':
-            return str( rating.rating )
+            return str(rating.rating)
     db.session.commit()
     return 'yay'
 
-# }}}
 
+# }}}
+# /<any(post, request):yell_type>/<id>/report  {{{
+@app.route( '/<any(post, request, comment):yell_type>/<id>/report', methods=['GET', 'POST'],)
+def report_yell(yell_type, id):
+    if request.method == "POST":
+        return redirect("/" + yell_type + "/" + id)
+    return 'yay'
+
+
+# }}}
+# /<any(post, request):yell_type>/<id>/delete  {{{
+@app.route(
+    '/<any(post, request, comment):yell_type>/<id>/delete',
+    methods=['GET', 'POST'],
+)
+def delete_yell(yell_type, id, report):
+    return 'yay'
+
+
+# }}}
+# /<any(post, request):yell_type>/<id>/edit  {{{
+@app.route(
+    '/<any(post, request, comment):yell_type>/<id>/edit',
+    methods=['GET', 'POST'],
+)
+def edit_yell(yell_type, id, report):
+    return 'yay'
+
+
+# }}}
+# /<any(post, request):yell_type>/<id>/mark  {{{
+@app.route(
+    '/<any(post, request, comment):yell_type>/<id>/mark',
+    methods=['GET', 'POST'],
+)
+def mark_yell(yell_type, id, report):
+    return 'yay'
+
+
+# }}}
 @app.route('/api/yell/<yell_id>')  # {{{
 def get_yell(yell_id):
     if yell_id == 'last':
@@ -822,7 +817,6 @@ def get_yell(yell_id):
     if not base:
         return '404'
 
-
     match (base.yell_type):
         case 'pst':
             return get_post(base.yell_id)
@@ -832,9 +826,9 @@ def get_yell(yell_id):
             return get_comment(base.yell_id)
         case _:
             return '404'
+
+
 # }}}
-
-
 @app.route('/api/post/<post_id>')  # {{{
 @app.route('/api/pst/<post_id>')
 # @login_required
@@ -850,7 +844,9 @@ def get_post(post_id):
     else:
         post = db.session.get(Post, post_id)
         if not post:
-            post = db.session.execute(db.select(Post).filter_by(base_yell_id=post_id)).scalar()
+            post = db.session.execute(
+                db.select(Post).filter_by(base_yell_id=post_id)
+            ).scalar()
     if not post:
         return '404'
 
@@ -864,6 +860,7 @@ def get_post(post_id):
         base_datetime=base.yell_datetime.isoformat(),
         base_type=base.yell_type,
         author=base.author.username,
+        owned=base.author.id == current_user.get_id(),
         content_id=post.post_content_id,
         post_code=post.post_code,
         post_description=post.post_description,
@@ -890,7 +887,9 @@ def get_request(request_id):
     else:
         req = db.session.get(Request, request_id)
         if not req:
-            req = db.session.execute(db.select(Request).filter_by(base_yell_id=request_id)).scalar()
+            req = db.session.execute(
+                db.select(Request).filter_by(base_yell_id=request_id)
+            ).scalar()
 
     if not req:
         return '404'
@@ -905,6 +904,7 @@ def get_request(request_id):
         base_datetime=base.yell_datetime.isoformat(),
         base_type=base.yell_type,
         author=base.author.username,
+        owned=base.author.id == current_user.get_id(),
         content_id=req.request_content_id,
         request_content=req.request_content,
         request_state=req.request_state,
@@ -936,7 +936,9 @@ def get_commentset(yell_id):
 def get_comment(comment_id):
     comment = db.session.get(Comment, comment_id)
     if not comment:
-        comment = db.session.execute(db.select(Comment).filter_by(base_yell_id=comment_id)).scalar()
+        comment = db.session.execute(
+            db.select(Comment).filter_by(base_yell_id=comment_id)
+        ).scalar()
         if not comment:
             return '404'
 
@@ -950,6 +952,7 @@ def get_comment(comment_id):
         base_datetime=base.yell_datetime.isoformat(),
         base_type=base.yell_type,
         author=base.author.username,
+        owned=base.author.id == current_user.get_id(),
         content_id=comment.comment_id,
         comment_set_id=comment.comment_set_id,
         comment_content=comment.comment_content,
