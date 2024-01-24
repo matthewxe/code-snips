@@ -15,7 +15,7 @@ I also chose a flex box as the main way of showing posts since it seems free flo
 There is very much some design flaws that should be addressed, but for now it's straightforward and sleek.
 #### Backend
 This uses [Flask](https://flask.palletsprojects.com/en/3.0.x/) and many other python libraries.
-The way you get information is simply just an api path where you can request a file id and thats it.
+The way you get information is simply just an API path where you can request a file ID and thats it.
 The other one is for searching, since you need to have constant updates I decided that it would be better that it could be a websocket, and as I never used this before I wanted to learn it, after implementing it works fairly smoothly.
 ##### Here are some of the python libraries that helped in the backend
 1. [nh3](https://pypi.org/project/nh3/), adds python bindings to an html santizier named [rust-amonia](https://github.com/rust-ammonia/ammonia).
