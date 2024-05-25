@@ -5,8 +5,27 @@ async function get_yell(id) {
 	return await result.json();
 }
 
+async function get_tags(id) {
+	const result = await fetch("/tags/" + id);
+	return await result.json();
+}
+
+async function append_tags(title, id) {
+	const tags = await get_tags(id);
+	if (tags == "404") {
+		return "404";
+	}
+	title.innerHTML += "<br><br>Tags: ";
+	for (var index = 0; index < tags.length; index++) {
+		const tag = document.createElement("span");
+		tag.className = "mx-1 fs-6 badge bg-secondary";
+		tag.innerHTML = tags[index];
+		title.appendChild(tag);
+	}
+}
+
 // async function create_card(json) {
-async function create_card(json) {
+async function create_card(json, tags) {
 	const yell_id = json["yell_id"];
 
 	const card = document.createElement("div");
@@ -16,6 +35,7 @@ async function create_card(json) {
 	const title = document.createElement("h3");
 	title.className = "pe-5 flex-grow-1";
 	title.innerHTML = json["yell_title"];
+
 	title_container.appendChild(title);
 	card.appendChild(title_container);
 
@@ -62,6 +82,7 @@ async function create_card(json) {
 	const description_content_body = document.createElement("div");
 	description_content_body.className = "accordion-body";
 	description_content_body.innerHTML = json["post_description"];
+	append_tags(description_content_body, yell_id);
 	description_content.appendChild(description_content_body);
 	description.appendChild(description_content);
 	accordion.appendChild(description);
@@ -119,6 +140,7 @@ async function add_card_byid(id, div = main) {
 		// console.log("failed request for post", id);
 		return 404;
 	}
+	const tags = await get_tags(id);
 
 	const card = await create_card(get);
 	div.appendChild(card);
@@ -152,7 +174,7 @@ async function wait_for_scroll() {
 	);
 }
 
-async function main_func() {
+async function main_discover() {
 	const get = await get_yell("last");
 	for (var index = get["yell_id"]; index > 0; index--) {
 		if (index % 15 == 0) {
@@ -182,6 +204,6 @@ export {
 	add_card_byid,
 	// add_card_bydict,
 	create_card,
-	main_func,
+	main_discover,
 	stop_spinner,
 };

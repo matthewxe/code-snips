@@ -427,14 +427,19 @@ def post():
         db.session.flush()
 
         if tags:
-            tags = [tag.strip() for tag in tags.split(',')]
-            cleaned_tags = []
-            for tag in tags:
+            cleaned_tags = {tag.strip() for tag in tags.split(',')}
+            if len(tags) > 10:
+                return send_error(
+                    'Tags should not go above 10',
+                )
+            cleaned_cleaned_tags = []
+            for tag in cleaned_tags:
                 if len(tag) > 30:
                     return send_error(
-                        'A tag must not be longer than 30 characters',
+                        'A tag must not be longer than 30 characters'
                     )
-                cleaned_tags.append(clean_text(tag))
+                cleaned_cleaned_tags.append(clean_text(tag))
+
             for tag in cleaned_tags:
                 tag_db = Tag(
                     original_yell_id=yell.yell_id,
@@ -466,22 +471,19 @@ def post():
 
 @app.route('/create/request', methods=['GET', 'POST'])  # {{{
 @login_required
-def post_request():
-
+def req():
     if request.method == 'POST':
         send_error = lambda warning: render_template(
             'post.html',
             warning=warning,
             current_user=current_user,
             title=title or '',
-            description=description or '',
-            filename=filename or '',
-            code=code or '',
+            content=content or '',
+            tags=tags or '',
         )
         user_id = current_user.get_id()
         title = request.form.get('title')
-        description = request.form.get('description')
-        filename = request.form.get('filename')
+        content = request.form.get('content')
         code = request.form.get('code')
         if not user_id:
             return redirect(url_for('register'))
@@ -510,9 +512,10 @@ def post_request():
                 'Filenames must be atleast 3 characters long and a maximum of 50',
             )
 
-        title = clean(title)
+        title = clean_text(title)
         filename = clean_text(filename)
-        description = clean(
+
+        description = clean_text(
             markdown(
                 description,
                 extensions=[
@@ -543,6 +546,29 @@ def post_request():
         )
         db.session.add(yell)
         db.session.flush()
+
+        if tags:
+            cleaned_tags = {tag.strip() for tag in tags.split(',')}
+            if len(tags) > 10:
+                return send_error(
+                    'Tags should not go above 10',
+                )
+            cleaned_cleaned_tags = []
+            for tag in cleaned_tags:
+                if len(tag) > 30:
+                    return send_error(
+                        'A tag must not be longer than 30 characters'
+                    )
+                cleaned_cleaned_tags.append(clean_text(tag))
+
+            for tag in cleaned_tags:
+                tag_db = Tag(
+                    original_yell_id=yell.yell_id,
+                    tag_content=tag,
+                )
+                db.session.add(tag_db)
+                db.session.flush()
+
         db.session.add(
             Post(
                 base_yell_id=yell.yell_id,
@@ -565,7 +591,7 @@ def post_request():
 
 
 @app.route('/yell/<yell_id>')  # {{{
-@login_required
+# @login_required
 def get_yell(yell_id):
     if yell_id == 'last':
         query = db.session.execute(
@@ -639,7 +665,7 @@ def get_yell(yell_id):
 
 
 @sock.route('/yell/search/<searched>')  # {{{
-@login_required
+# @login_required
 def get_yell_multi(ws, searched):
     all = db.session.execute(db.select(Yell)).scalars().all()
     threshold = 80
@@ -718,11 +744,16 @@ def send_temp_dict(ws, temp_dict):
 
 
 @app.route('/tags/<yell_id>')
-@login_required
+# @login_required
 def get_tags(yell_id):
-    tags = db.session.execute(
-        db.select(Tag).filter_by(original_yell_id=yell_id)
-    ).scalars()
+    tags = (
+        db.session.execute(db.select(Tag).filter_by(original_yell_id=yell_id))
+        .scalars()
+        .all()
+    )
+    if not tags:
+        return '404'
+    tags = [tag.tag_content for tag in tags]
     return jsonify(tags)
 
 

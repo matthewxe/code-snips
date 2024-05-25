@@ -1,5 +1,6 @@
 const editor = ace.edit("ace-editor", {
-	maxLines: 25,
+	minLines: 15,
+	maxLines: 40,
 	theme: "ace/theme/one_dark",
 	fontFamily: "Fira Code",
 });
