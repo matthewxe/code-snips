@@ -6,13 +6,12 @@ const recent = document.getElementById("recently_uploaded");
 async function spinner_replace(id, div) {
 	const get = await get_yell(id);
 	if (get == 404) {
-		// console.log("failed request for post", id);
-		return 404;
+		div.innerHTML = "Could not load this post right now.";
+	} else {
+		const card = await create_card(get);
+		div.innerHTML = "";
+		div.appendChild(card);
 	}
-
-	const card = await create_card(get);
-	div.innerHTML = "";
-	div.appendChild(card);
 }
 
 spinner_replace("rated", rated);
