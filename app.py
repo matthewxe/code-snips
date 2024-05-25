@@ -20,22 +20,20 @@ from flask_login import (
     logout_user,
     login_required,
 )
-from html_sanitizer import Sanitizer
 from nh3 import clean, clean_text
 from markdown import markdown
 from jarowinkler import jarowinkler_similarity
 from datetime import datetime
 
-sanitizer = Sanitizer()
 # LOGGING FOMAT
 # def log(message, typeoflog):
-def log(messages):
-    escapecode = '\033[100;92mLOG ::'
-    if type(messages) is list:
-        for message in messages:
-            print(escapecode + str(message) + '\033[0m')
-    else:
-        print(escapecode + str(messages) + '\033[0m')
+# def log(messages):
+#     escapecode = '\033[100;92mLOG ::'
+#     if type(messages) is list:
+#         for message in messages:
+#             print(escapecode + str(message) + '\033[0m')
+#     else:
+#         print(escapecode + str(messages) + '\033[0m')
 
 
 # Supported Languages{{{
@@ -339,11 +337,11 @@ def create(typeofpost):
                         'Must choose a supported language',
                     )
 
-                print(title, description, code)
+                # print(title, description, code)
                 title = clean(title)
                 description = clean(markdown(description))
                 code = clean_text(code)
-                print(title, description, code)
+                # print(title, description, code)
                 db.session.add(
                     Post(
                         yell_maker_id=user_id,
@@ -372,7 +370,7 @@ def create(typeofpost):
 def get_yell(yell_id):
     if yell_id == 'last':
         query = Post.query.order_by(Post.yell_id.desc()).first()
-        print(query)
+        # print(query)
     else:
         query = Post.query.filter_by(yell_id=yell_id).first()
     if not query:
@@ -404,12 +402,12 @@ def get_yell_multi(ws, searched):
     #     ws = session['ws']
     # else:
     #     session['ws'] = ws
-    print('socketd', ws, searched)
+    # print('socketd', ws, searched)
     all = Post.query.all()
     temp_dict = {}
-    print('not waiting')
+    # print('not waiting')
     for idx, query in enumerate(all, 1):
-        print(idx)
+        # print(idx)
         if idx % 15 == 0:
 
             temp_dict = dict(
@@ -425,7 +423,7 @@ def get_yell_multi(ws, searched):
             while True:
                 data = ws.receive()
                 if data == 'next':
-                    print('recieved')
+                    # print('recieved')
                 break
 
         temp_dict[query.yell_id] = 0
@@ -461,7 +459,7 @@ def insert_random(db, max):  # {{{
         return ''.join(random.choice(letters) for i in range(length))
 
     for i in range(max):
-        print(i)
+        # print(i)
 
         fake_user = i
         # fake_user = random.randint(0, max)

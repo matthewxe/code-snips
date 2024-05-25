@@ -119,7 +119,7 @@ async function add_card_bydict(dict) {
 	}
 
 	const card = await create_card(dict);
-	console.log(card);
+	// console.log(card);
 	main.appendChild(card);
 	// console.log("completed request for post", dict["yell_title"]);
 }
@@ -132,7 +132,7 @@ async function wait_for_scroll() {
 				window.innerHeight + window.scrollY >= document.body.offsetHeight - 100;
 
 			if (endOfPage) {
-				console.log(endOfPage);
+				// console.log(endOfPage);
 				resolve(new Promise((r) => setTimeout(r, 500)));
 			} else return window.addEventListener("scroll", self);
 		}),
@@ -145,11 +145,7 @@ async function main_func() {
 		if (index % 15 == 0) {
 			await wait_for_scroll();
 		}
-		if (add_card_byid(index) == 404) {
-			console.log("$$$$404");
-		} else {
-			console.log(index);
-		}
+		add_card_byid(index);
 		// add_card_byid(id);
 	}
 }
