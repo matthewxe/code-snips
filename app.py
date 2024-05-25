@@ -451,43 +451,43 @@ def get_yell_multi(ws, searched):
 # }}}
 
 
-def insert_random(db, max):  # {{{
-    import random, string
-
-    def randomword(length):
-        letters = string.ascii_lowercase
-        return ''.join(random.choice(letters) for i in range(length))
-
-    for i in range(max):
-        # print(i)
-
-        fake_user = i
-        # fake_user = random.randint(0, max)
-        db.session.add(
-            User(
-                id=fake_user,
-                username=randomword(50),
-                # hash=bcrypt.generate_password_hash(randomword(50)),
-                hash=randomword(50),
-            )
-        )
-        db.session.add(
-            Post(
-                yell_id=i,
-                yell_maker_id=fake_user,
-                yell_title=randomword(50),
-                yell_description=randomword(500),
-                yell_code=randomword(1000),
-                yell_language=randomword(10),
-            )
-        )
-
-    db.session.commit()
-
-
-# }}}
+# def insert_random(db, max):  # {{{
+#     import random, string
+#
+#     def randomword(length):
+#         letters = string.ascii_lowercase
+#         return ''.join(random.choice(letters) for i in range(length))
+#
+#     for i in range(max):
+#         # print(i)
+#
+#         fake_user = i
+#         # fake_user = random.randint(0, max)
+#         db.session.add(
+#             User(
+#                 id=fake_user,
+#                 username=randomword(50),
+#                 # hash=bcrypt.generate_password_hash(randomword(50)),
+#                 hash=randomword(50),
+#             )
+#         )
+#         db.session.add(
+#             Post(
+#                 yell_id=i,
+#                 yell_maker_id=fake_user,
+#                 yell_title=randomword(50),
+#                 yell_description=randomword(500),
+#                 yell_code=randomword(1000),
+#                 yell_language=randomword(10),
+#             )
+#         )
+#
+#     db.session.commit()
+#
+#
+# # }}}
 
 if __name__ == '__main__':
-    with app.app_context():
-        insert_random(db, 1000)
-    # app.run()
+    # with app.app_context():
+    #     insert_random(db, 1000)
+    app.run()
