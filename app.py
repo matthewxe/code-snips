@@ -676,10 +676,12 @@ def yell_page(yell_type, id):
         )  # }}}
 
 # /<any(post, request):yell_type>/<id>/<rate>  {{{
-@app.route( '/<any(post, request, comment):yell_type>/<id>/<rate>', methods=['POST']
+@app.route( '/<any(post, request, comment):yell_type>/<id>/<rate_type>', methods=["GET", 'POST']
 )
 # @login_required
 def do_rate(yell_type, id, rate_type):
+    print(rate_type)
+    print(bool( rate_type ))
     if not bool( rate_type ):
         return '404'
     # user_id = current_user.get_id()
@@ -713,7 +715,6 @@ def get_yell(yell_id):
         return '404'
 
 
-    print(LOG, base.yell_type, END)
     match (base.yell_type):
         case 'pst':
             return get_post(base.yell_id)
@@ -767,7 +768,6 @@ def get_post(post_id):
 @app.route('/api/req/<request_id>')
 # @login_required
 def get_request(request_id):
-    print(request_id)
     if request_id == 'last':
         req = db.session.execute(
             db.select(Request).order_by(Request.request_content_id.desc())
