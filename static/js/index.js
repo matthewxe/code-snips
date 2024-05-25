@@ -15,3 +15,6 @@ async function spinner_replace(id, div) {
 
 spinner_replace("rated", rated);
 spinner_replace("last", recent);
+
+const get = await add_card_byid("last", "yell");
+console.log(get);
