@@ -1,14 +1,19 @@
-import { add_card_byid, create_card, get_yell } from "./discover.js";
+import { get_yell, create_card } from "./discover.js";
 
 const rated = document.getElementById("highest_rated");
 const recent = document.getElementById("recently_uploaded");
 
-async function main() {
-	recent.innerHTML = "";
-	await add_card_byid("last", recent);
+async function spinner_replace(id, div) {
+	const get = await get_yell(id);
+	if (get == 404) {
+		// console.log("failed request for post", id);
+		return 404;
+	}
 
-	rated.innerHTML = "";
-	await add_card_byid("rated", rated);
+	const card = await create_card(get);
+	div.innerHTML = "";
+	div.appendChild(card);
 }
 
-main();
+spinner_replace("rated", rated);
+spinner_replace("last", recent);
