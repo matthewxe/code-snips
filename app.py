@@ -19,10 +19,11 @@ from flask_login import (
     logout_user,
     login_required,
 )
-from bleach import clean
+from html_sanitizer import Sanitizer
 from markdown import markdown
 from jarowinkler import jarowinkler_similarity
 
+sanitizer = Sanitizer()
 # LOGGING FORMAT
 # def log(message, typeoflog):
 def log(messages):
@@ -199,7 +200,7 @@ def register():
         if User.query.filter_by(username=username).first():
             return render_template(
                 'register.html',
-                warning='That username already exists',
+                warning='That user already exists',
             )
 
         hash = bcrypt.generate_password_hash(password)
@@ -247,6 +248,14 @@ def logout():
 
 @app.route('/discover')  # {{{
 def discover():
+    return render_template(
+        'discover.html',
+        is_active=current_user.is_active,
+    )  # }}}
+
+
+@app.route('/search')  # {{{
+def search():
     return render_template(
         'discover.html',
         is_active=current_user.is_active,
@@ -313,8 +322,8 @@ def create(typeofpost):
                         'Must choose a supported language',
                     )
 
-                # description = clean(markdown(description))
-                description = markdown(description)
+                description = sanitizer.sanitize(markdown(description))
+                # description = markdown(description)
                 db.session.add(
                     Post(
                         yell_maker_id=user_id,
