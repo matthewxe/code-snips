@@ -1,6 +1,6 @@
 from flask import Flask, request, redirect, render_template, url_for, session
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Integer
+from sqlalchemy import Integer, func
 from sqlalchemy.orm import Mapped
 from flask_bcrypt import Bcrypt
 from flask_login import (
@@ -13,8 +13,15 @@ from flask_login import (
 )
 
 # LOGGING FORMAT
-LOG = '\033[100;92mLOG ::'
-FAIL = '\033[100;91mFAIL::'
+# def log(message, typeoflog):
+def log(messages):
+    escapecode = '\033[100;92mLOG ::'
+    if type(messages) is list:
+        for message in messages:
+            print(escapecode + str(message) + '\033[0m')
+    else:
+        print(escapecode + str(messages) + '\033[0m')
+
 
 # Supported Languages
 class Lang:
@@ -110,12 +117,13 @@ def load_user(id):
 
 @app.route('/')  # {{{
 def index():
-    print(LOG, User.is_active, User.is_authenticated)
-    print(
-        FAIL,
-        User.query.all(),
-        current_user.is_active,
-        current_user.is_authenticated,
+    log([User.is_active, User.is_authenticated])
+    log(
+        [
+            User.query.all(),
+            current_user.is_active,
+            current_user.is_authenticated,
+        ]
     )
     return render_template(
         'index.html', is_active=current_user.is_active
@@ -215,23 +223,33 @@ def discover():
 @app.route('/create/<typeofpost>', methods=['GET', 'POST'])  # {{{
 @login_required
 def create(typeofpost):
-    if request.method == 'POST':
-        return 'shit'
-    else:
-        if not typeofpost:
-            return redirect(url_for('index'))   # }}}
+    if not typeofpost:
+        return redirect(url_for('index'))   # }}}
 
-        match (typeofpost):
-            case 'post':
+    match (typeofpost):
+        case 'post':
+            if request.method == 'POST':
+                log(User.query.first())
+                log(User.query.get(id))
+                form = request.form
+
+                for value in request.form:
+                    print(value, form[value])
                 return render_template(
                     'post.html',
                     is_active=current_user.is_active,
                     languages=SUPPORTED_LANGS,
                 )
-            case 'request':
-                return render_template('post_request.html')
-            case _:
-                return redirect(url_for('index'))   # }}}
+            else:
+                return render_template(
+                    'post.html',
+                    is_active=current_user.is_active,
+                    languages=SUPPORTED_LANGS,
+                )
+        case 'request':
+            return render_template('post_request.html')
+        case _:
+            return redirect(url_for('index'))   # }}}
 
 
 @app.route('/create')  # {{{

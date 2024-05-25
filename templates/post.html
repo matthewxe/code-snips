@@ -1,17 +1,8 @@
 {% extends "template.html" %}
 {% block head %}
 <link href="../static/post.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/ace-builds@1.32.2/src-min-noconflict/ace.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/ace-builds@1.32.2/src-min-noconflict/ace.min.js"></script>
 <script defer src="../static/post.js"></script>
-<style type="text/css" media="screen">
-	#editor {
-		position: absolute;
-		top: 0;
-		right: 0;
-		bottom: 0;
-		left: 0;
-	}
-</style>
 {% endblock %}
 {% block title %}Create -{% endblock %}
 {% block body %}
@@ -20,26 +11,62 @@
 </form>
 <div class="card mx-5 p-3 mb-3">
 	<h3>Title</h3>
-	<input class="form-control" type="text" name="title" form="form" placeholder="A clear concise title of the solution"
+	<input class="form-control" type="text" name="title" form="form" placeholder="A concise title of the program"
 		id="titleform">
 </div>
 <div class="card mx-5 p-3 mb-3">
 	<h3>Description</h3>
-	<p>You can use markdown formatting</p>
+	<!-- <p>You can use markdown formatting</p> -->
+	<p>
+		Write something that could be used in conjunction with code comments to guide peoople to understanding your solution
+		or about your program
+	</p>
 	<div class="form-floating">
-		<textarea class="form-control" placeholder="Add a description" id="floatingDescription"></textarea>
+		<textarea form="form" name="description" class="form-control" placeholder="Add a description"
+			id="floatingDescription"></textarea>
 		<label for="floatingDescription">Description</label>
 	</div>
 </div>
 <div class="card mx-5 p-3 mb-3">
 	<h3>Code</h3>
-	<select id="language" class="form-select form-select-sm w-3 mb-3" aria-label="Small select example">
-		<option disabled selected>Language</option>
-		{% for lang in languages %}<option value="{{ lang.ace }}">{{ lang.name }}</option>{% endfor %}
-	</select>
-	<div class="card fs-5" style="font-size: 144px;">
-		<div id="ace-editor" class="fs-3"></div>
+	<div class="container text-center">
+		<div class="row">
+			<div class="col-5">
+				<select id="language" form="form" name="language" class="form-select form-select-lg w-3 mb-3 me-auto"
+					aria-label="Small select example">
+					<option disabled selected>Language</option>
+					{% for lang in languages %}<option value="{{ lang.ace }}">{{ lang.name }}</option>{% endfor %}
+				</select>
+			</div>
+			<div class="col-3">
+				<select id="editorMax" class="form-select form-select-lg w-3 mb-3 me-auto" aria-label="Small select example">
+					<option disabled selected>Editor Max Length</option>
+					<option value="10">10</option>
+					<option value="20">20</option>
+					<option value="30">30</option>
+				</select>
+			</div>
+			<div class="col-2">
+				<select id="editorMax" class="form-select form-select-lg w-3 mb-3 me-auto" aria-label="Small select example">
+					<option disabled selected>Tab Size</option>
+					<option value="2">2</option>
+					<option value="4">4</option>
+					<option value="8">8</option>
+				</select>
+			</div>
+			<div class="col-2">
+				<select id="editorMax" class="form-select form-select-lg w-3 mb-3 me-auto" aria-label="Small select example">
+					<option disabled selected>Wrap Style</option>
+					<option value="nowrap">No Wrap</option>
+					<option value="softwrap">Soft Wrap</option>
+				</select>
+			</div>
+		</div>
+	</div>
+	<div class="input-group mb-3"></div>
+	<div class="card fs-5">
+		<div id="ace-editor" class="fs-5"></div>
 	</div>
 </div>
-<button class="btn btn-primary" type="button">Submit</button>
+<button id="submit_button" name="code" form="form" class="btn btn-primary" type="submit">Submit</button>
 {% endblock %}
