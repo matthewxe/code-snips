@@ -1,49 +1,41 @@
-{% extends "template.html" %} 
-
+{% extends "template.html" %}
 {% block body %}
 <link rel="stylesheet" href="../static/index.css">
-<h1 class="text-center" id="title">Yello!</h1>
-<h1 class="mx-5 text-center fw-normal">look up code solutions by <b>other</b> developers</h1>
-
+<h1 class="text-center" id="title">Yällo!</h1>
+<h1 class="mx-5 text-center fw-normal">
+  look up code solutions by <b>other</b> developers
+</h1>
 <br>
 <div class="container">
   <form class="mb-3 row justify-content-evenly px-5 ms-md-5" role="search" action="/search" method="GET">
     <div class="d-inline col">
-      <input class="form-control" name="q" type="search" placeholder="Look up a programming problem" aria-label="Search">
+      <input class="form-control" name="q" type="search" placeholder="Look up a programming problem"
+        aria-label="Search">
     </div>
     <div class="d-inline col-2">
       <button class="btn btn-primary" type="submit">Search</button>
     </div>
   </form>
 </div>
-<h6 class="mx-5 text-center fw-normal">See how other programmers have solved these problems</h2>
-
+<h6 class="mx-5 text-center fw-normal">See how other programmers have solved these problems</h6>
 <br>
 <br>
 <div class="container-sm mx-auto">
   <div class="row">
     <div class="d-flex flex-column col me-3">
       <span class="mx-auto">Most Popular</span>
-      <div class="bg-body-tertiary"> 
-        Something good
-      </div>
+      <div class="bg-body-tertiary">Something good</div>
       <div class="m-auto bg-body-tertiary spinner-border" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
-
-
     <div class="d-flex flex-column col ms-3">
       <span class="mx-auto">Recently Uploaded</span>
-      <div class="bg-body-tertiary">
-        Rightfully banned
-      </div>
+      <div class="bg-body-tertiary">Rightfully banned</div>
       <div class="m-auto bg-body-tertiary spinner-border" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
   </div>
 </div>
-  
-
 {% endblock %}

@@ -1,0 +1,29 @@
+@import url(https://fonts.googleapis.com/css?family=Fira+Code);
+
+.codeArea {
+        font-family: "Fira Code";
+}
+
+html,
+body {
+        height: 100%;
+}
+
+body {
+        overflow: hidden;
+}
+
+.inner {
+        height: 300px;
+        padding-right: 0;
+        padding-left: 0;
+        background-color: #ccc;
+}
+
+#ace-editor {
+        min-height: 100px;
+}
+
+#floatingDescription {
+        min-height: 100px;
+}
