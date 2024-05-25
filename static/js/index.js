@@ -5,13 +5,11 @@ const recent = document.getElementById("recently_uploaded");
 
 async function spinner_replace(id, div) {
 	const get = await add_card_byid(id, "yell", div);
-	console.log(get);
+	console.log(id, get);
 	if (get == "404") {
 		div.innerHTML = "Could not load this post right now.";
 	} else {
-		console.log(div.children[0].remove());
-		// div.innerHTML = "";
-		// div.appendChild(get);
+		div.children[0].remove();
 	}
 }
 

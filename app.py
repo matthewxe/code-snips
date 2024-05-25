@@ -633,9 +633,11 @@ def yell_page(yell_type, id):
                 'Something went wrong, please report this error, CODE: 3'
             )
 
-        print(LOG, data.base_yell.yell_comments, END)
-        db.session.execute( db.update(Yell).filter_by(yell_id=data.base_yell_id).values(yell_comments=data.base_yell.yell_comments + 1) )
-        print(LOG, data.base_yell.yell_comments, END)
+        db.session.execute(
+            db.update(Yell)
+            .filter_by(yell_id=data.base_yell_id)
+            .values(yell_comments=data.base_yell.yell_comments + 1)
+        )
         commentset = db.session.execute(
             db.select(CommentSet).filter_by(original_yell_id=data.base_yell_id)
         ).scalar()
@@ -675,86 +677,43 @@ def yell_page(yell_type, id):
 
 
 @app.route('/api/yell/<yell_id>')  # {{{
-# @login_required
 def get_yell(yell_id):
     if yell_id == 'last':
         base = db.session.execute(
             db.select(Yell).order_by(Yell.yell_id.desc())
         ).scalar()
+        print(base)
     elif yell_id == 'rated':
         base = db.session.execute(
             db.select(Yell).order_by(Yell.yell_rating.desc())
         ).scalar()
     else:
         base = db.session.get(Yell, yell_id)
-        db.session.get
+
+
     if not base:
         return '404'
 
-    print(base.yell_type)
+
+    print(LOG,base, "again", END)
+
     match (base.yell_type):
         case 'pst':
-            post = db.session.execute(
-                db.select(Post).filter_by(base_yell_id=base.yell_id)
-            ).scalar()
-            if not post:
-                return '404'
-            return jsonify(
-                base_id=base.yell_id,
-                base_title=base.yell_title,
-                base_rating=base.yell_rating,
-                base_datetime=base.yell_datetime.isoformat(),
-                base_type=base.yell_type,
-                author=base.author.username,
-                content_id=post.post_content_id,
-                post_code=post.post_code,
-                post_description=post.post_description,
-                post_filename=post.post_filename,
-            )
-
+            return get_post(base.yell_id)
         case 'req':
-            req = db.session.execute(
-                db.select(Request).filter_by(base_yell_id=base.yell_id)
-            ).scalar()
-            if not req:
-                return '404'
-            return jsonify(
-                base_id=base.yell_id,
-                base_title=base.yell_title,
-                base_rating=base.yell_rating,
-                base_datetime=base.yell_datetime.isoformat(),
-                base_type=base.yell_type,
-                author=base.author.username,
-                content_id=req.request_content_id,
-                request_content=req.request_content,
-            )
+            return get_request(base.yell_id)
         case 'com':
-            post = db.session.execute(
-                db.select(Post).filter_by(base_yell_id=base.yell_id)
-            ).scalar()
-            if not post:
-                return '404'
-            return jsonify(
-                # yell_id=base.yell_id,
-                yell_title=base.yell_title,
-                author=base.author.username,
-                yell_rating=base.yell_rating,
-                yell_type=base.yell_type,
-                yell_datetime=base.yell_datetime.isoformat(),
-                post_code=post.post_code,
-                post_description=post.post_description,
-                post_filename=post.post_filename,
-            )
+            return get_comment(base.yell_id)
         case _:
             return '404'
-    # except:
-    #     return '404'   # }}}
+# }}}
 
 
 @app.route('/api/post/<post_id>')  # {{{
 @app.route('/api/pst/<post_id>')
 # @login_required
 def get_post(post_id):
+    print(LOG, 'post', END)
     if post_id == 'last':
         post = db.session.execute(
             db.select(Post).order_by(Post.post_content_id.desc())
@@ -774,9 +733,9 @@ def get_post(post_id):
         base_id=base.yell_id,
         base_title=base.yell_title,
         base_rating=base.yell_rating,
-        base_comments=base.yell_rating,
+        base_comments=base.yell_comments,
         base_datetime=base.yell_datetime.isoformat(),
-        # base_type=query.yell_type,
+        base_type=base.yell_type,
         author=base.author.username,
         content_id=post.post_content_id,
         post_code=post.post_code,
@@ -790,6 +749,7 @@ def get_post(post_id):
 @app.route('/api/req/<request_id>')
 # @login_required
 def get_request(request_id):
+    print(LOG, request_id, END)
     if request_id == 'last':
         req = db.session.execute(
             db.select(Request).order_by(Request.request_content_id.desc())
@@ -803,15 +763,17 @@ def get_request(request_id):
     if not req:
         return '404'
 
+    print(LOG, req, END)
+
     base = req.base_yell
 
     return jsonify(
         base_id=base.yell_id,
         base_title=base.yell_title,
         base_rating=base.yell_rating,
-        base_comments=base.yell_rating,
+        base_comments=base.yell_comments,
         base_datetime=base.yell_datetime.isoformat(),
-        # base_type=query.yell_type,
+        base_type=base.yell_type,
         author=base.author.username,
         content_id=req.request_content_id,
         request_content=req.request_content,
@@ -842,6 +804,7 @@ def get_commentset(yell_id):
 @app.route('/api/comment/<comment_id>')  # {{{
 # @login_required
 def get_comment(comment_id):
+    print(LOG, 'comment', END)
     comment = db.session.get(Comment, comment_id)
     if not comment:
         return '404'
@@ -852,8 +815,9 @@ def get_comment(comment_id):
         base_id=base.yell_id,
         base_title=base.yell_title,
         base_rating=base.yell_rating,
-        base_comments=base.yell_rating,
+        base_comments=base.yell_comments,
         base_datetime=base.yell_datetime.isoformat(),
+        base_type=base.yell_type,
         author=base.author.username,
         content_id=comment.comment_id,
         comment_set_id=comment.comment_set_id,
@@ -929,6 +893,7 @@ def get_yell_multi(ws, searched):
                 continue
             case _:
                 continue
+
         for idx, item in enumerate(eval):
             ratio = fuzz.WRatio(
                 str(searched), str(item), processor=utils.default_process

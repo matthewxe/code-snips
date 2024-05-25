@@ -129,6 +129,23 @@ async function create_post_card(json) {
 	code.appendChild(code_content);
 	accordion.appendChild(code);
 	card.appendChild(accordion);
+
+	if (json["base_comments"] > 0) {
+		const replies_div = document.createElement("div");
+
+		const replies = document.createElement("a");
+		replies.innerHTML = "Comments ";
+		replies.className = "btn btn-secondary mt-3";
+		replies.href = json["base_type"] + "/" + json["content_id"];
+
+		const badge = document.createElement("span");
+		badge.innerHTML = json["base_comments"];
+		badge.className = "badge bg-body-secondary";
+		replies.appendChild(badge);
+		replies_div.appendChild(replies);
+		card.appendChild(replies_div);
+	}
+
 	return card;
 }
 //}}}
@@ -194,19 +211,79 @@ async function create_request_card(json) {
 	body_content.appendChild(body_content_body);
 	body.appendChild(body_content);
 	accordion.appendChild(body);
+
 	card.appendChild(accordion);
+	if (json["base_comments"] > 0) {
+		const replies_div = document.createElement("div");
+
+		const replies = document.createElement("a");
+		replies.innerHTML = "Comments ";
+		replies.className = "btn btn-secondary mt-3";
+		replies.href = json["base_type"] + "/" + json["content_id"];
+
+		const badge = document.createElement("span");
+		badge.innerHTML = json["base_comments"];
+		badge.className = "badge bg-body-secondary";
+		replies.appendChild(badge);
+		replies_div.appendChild(replies);
+		card.appendChild(replies_div);
+	}
+
 	return card;
 } //}}}
+async function create_comment(json) {
+	const comment = document.createElement("div"); //{{{
+	comment.className = "bg-body-tertiary card p-3 mb-3";
+	const title_container = document.createElement("div");
+	title_container.className = "d-flex align-middle";
+
+	const lower_container = document.createElement("div");
+	lower_container.className = "d-flex h-1";
+	const made_by = document.createElement("p");
+	made_by.className = "align-middle flex-grow-1";
+	const name = document.createElement("span");
+	name.innerHTML = json["author"];
+	name.className = "text-info";
+	made_by.appendChild(name);
+	made_by.innerHTML += ", " + new Date(json["base_datetime"]).toLocaleString();
+	lower_container.appendChild(made_by);
+	comment.appendChild(lower_container);
+
+	const content = document.createElement("a");
+	// title.className = "pe-5 flex-grow-1 fs-3 comment-title";
+	content.className = "card-title";
+	content.innerHTML = json["comment_content"];
+	content.href = "/comment" + "/" + json["content_id"];
+	comment.appendChild(content);
+
+	if (json["base_comments"] > 0) {
+		const replies_div = document.createElement("div");
+
+		const replies = document.createElement("a");
+		replies.innerHTML = "Replies ";
+		const badge = document.createElement("span");
+		badge.innerHTML = json["base_comments"];
+		badge.className = "badge bg-body-secondary";
+		replies.className = "btn btn-secondary";
+		replies.href = "/comment" + "/" + json["content_id"];
+		replies.appendChild(badge);
+
+		replies_div.appendChild(replies);
+		comment.appendChild(replies_div);
+	}
+
+	return comment;
+} //}}}
+
 async function add_card_byid(id, type = "yell", div = main) {
-	console.log("request for post", id);
+	// console.log("request for post", id);
 	const get = await get_api(id, type);
 	if (get == "404") {
-		console.log("failed request for post", id);
+		// console.log("failed request for post", id);
 		return "404";
 	}
-	if (type == "yell") {
-		type = get["base_type"];
-	}
+	console.log(get);
+	type = get["base_type"];
 	console.log(type);
 	switch (type) {
 		case "pst":
@@ -221,11 +298,18 @@ async function add_card_byid(id, type = "yell", div = main) {
 			var card = await create_request_card(get);
 			div.appendChild(card);
 			break;
+		case "com":
+		case "comment":
+			get["base_type"] = "comment";
+			var card = await create_comment(get);
+			div.appendChild(card);
+			break;
 		default:
+			console.log("unkown type", type);
 			return "404";
 	}
 
-	console.log("completed request for post", id);
+	// console.log("completed request for post", id);
 }
 
 async function wait_for_scroll() {
@@ -243,21 +327,8 @@ async function wait_for_scroll() {
 	);
 }
 async function main_func(type) {
-	const get = await get_api("last", "request");
+	const get = await get_api("last", type);
 
-	const warn = document.getElementById("warn");
-	const spinner = document.getElementById("spinner");
-	const showtext = setTimeout(() => {
-		warn.style.display = "block";
-	}, 7000);
-
-	function stop_spinner() {
-		clearTimeout(showtext);
-		spinner.style.display = "none";
-		warn.style.display = "block";
-		warn.innerHTML = "No more results";
-	}
-	console.log(get);
 	for (var index = get["content_id"]; index > 0; index--) {
 		if (index % 15 == 0) {
 			await wait_for_scroll();
@@ -267,4 +338,17 @@ async function main_func(type) {
 	stop_spinner();
 }
 
-export { get_api, add_card_byid, main_func };
+const warn = document.getElementById("warn");
+const spinner = document.getElementById("spinner");
+const showtext = setTimeout(() => {
+	warn.style.display = "block";
+}, 7000);
+
+function stop_spinner() {
+	clearTimeout(showtext);
+	spinner.style.display = "none";
+	warn.style.display = "block";
+	warn.innerHTML = "No more results";
+}
+
+export { get_api, add_card_byid, main_func, stop_spinner, create_comment };
