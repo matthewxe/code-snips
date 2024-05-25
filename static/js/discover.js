@@ -5,6 +5,15 @@ async function get_yell(id) {
 	return await result.json();
 }
 
+async function get_post(id) {
+	const result = await fetch("/yell/" + id);
+	return await result.json();
+}
+async function get_request(id) {
+	const result = await fetch("/yell/" + id);
+	return await result.json();
+}
+
 async function get_tags(id) {
 	const result = await fetch("/tags/" + id);
 	return await result.json();
@@ -147,18 +156,6 @@ async function add_card_byid(id, div = main) {
 	// console.log("completed request for post", id);
 }
 
-// async function add_card_bydict(dict) {
-// 	// console.log("request for post", dict["yell_title"]);
-// 	if (dict == '404') {
-// 		return;
-// 	}
-//
-// 	const card = await create_card(dict);
-// 	// console.log(card);
-// 	main.appendChild(card);
-// 	// console.log("completed request for post", dict["yell_title"]);
-// }
-
 async function wait_for_scroll() {
 	return new Promise((resolve) =>
 		window.addEventListener("scroll", () => {
@@ -185,6 +182,17 @@ async function main_discover() {
 	stop_spinner();
 }
 
+async function main_requests() {
+	const get = await get_yell("last");
+	for (var index = get["yell_id"]; index > 0; index--) {
+		if (index % 15 == 0) {
+			await wait_for_scroll();
+		}
+		add_card_byid(index);
+	}
+	stop_spinner();
+}
+
 const warn = document.getElementById("warn");
 const spinner = document.getElementById("spinner");
 
@@ -199,11 +207,4 @@ function stop_spinner() {
 	warn.innerHTML = "No more results";
 }
 
-export {
-	get_yell,
-	add_card_byid,
-	// add_card_bydict,
-	create_card,
-	main_discover,
-	stop_spinner,
-};
+export { get_yell, add_card_byid, create_card, main_discover, stop_spinner };

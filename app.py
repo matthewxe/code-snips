@@ -50,7 +50,6 @@ sock = Sock(app)
 app.config['SOCK_SERVER_OPTIONS'] = {'ping_interval': 7}
 import os
 
-print(os.environ.get('SECRET_KEY'), os.environ.get('SECURITY_PASSWORD_SALT'))
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['SECURITY_PASSWORD_SALT'] = os.environ['SECURITY_PASSWORD_SALT']
 # Bcrypt Setup
@@ -480,19 +479,23 @@ def post():
 def req():
     if request.method == 'POST':
         send_error = lambda warning: render_template(
-            'post.html',
+            'request.html',
             warning=warning,
             current_user=current_user,
             title=title or '',
-            content=content or '',
+            filename=filename or '',
             tags=tags or '',
+            content=content or '',
         )
         user_id = current_user.get_id()
         title = request.form.get('title')
-        content = request.form.get('content')
         tags = request.form.get('tags')
+        filename = request.form.get('filename')
+        content = request.form.get('content')
         if not user_id:
             return redirect(url_for('register'))
+        elif not filename:
+            return send_error('Must have a file name')
         elif not title:
             return send_error('Must provide a title')
         elif not content:
@@ -570,7 +573,7 @@ def req():
 # }}}
 
 
-@app.route('/yell/<yell_id>')  # {{{
+@app.route('/api/yell/<yell_id>')  # {{{
 # @login_required
 def get_yell(yell_id):
     if yell_id == 'last':
@@ -587,6 +590,153 @@ def get_yell(yell_id):
     if not query:
         return '404'
 
+    print(query.yell_type)
+    match (query.yell_type):
+        case 'pst':
+            post = db.session.execute(
+                db.select(Post).filter_by(base_yell_id=query.yell_id)
+            ).scalar()
+            if not post:
+                return '404'
+            return jsonify(
+                yell_id=query.yell_id,
+                yell_title=query.yell_title,
+                author=query.author.username,
+                yell_rating=query.yell_rating,
+                yell_datetime=query.yell_datetime.isoformat(),
+                yell_type=query.yell_type,
+                post_code=post.post_code,
+                post_description=post.post_description,
+                post_filename=post.post_filename,
+            )
+
+        case 'req':
+            req = db.session.execute(
+                db.select(Request).filter_by(base_yell_id=query.yell_id)
+            ).scalar()
+            if not req:
+                return '404'
+            return jsonify(
+                # yell_id=query.yell_id,
+                yell_title=query.yell_title,
+                author=query.author.username,
+                yell_rating=query.yell_rating,
+                yell_datetime=query.yell_datetime.isoformat(),
+                yell_type=query.yell_type,
+                request_content=req.request_content,
+            )
+        case 'com':
+            post = db.session.execute(
+                db.select(Post).filter_by(base_yell_id=query.yell_id)
+            ).scalar()
+            if not post:
+                return '404'
+            return jsonify(
+                # yell_id=query.yell_id,
+                yell_title=query.yell_title,
+                author=query.author.username,
+                yell_rating=query.yell_rating,
+                yell_type=query.yell_type,
+                yell_datetime=query.yell_datetime.isoformat(),
+                post_code=post.post_code,
+                post_description=post.post_description,
+                post_filename=post.post_filename,
+            )
+        case _:
+            return '404'
+    # except:
+    #     return '404'   # }}}
+@app.route('/api/post/<yell_id>')  # {{{
+# @login_required
+def get_post(post_id):
+    if yell_id == 'last':
+        query = db.session.execute(
+            db.select(Yell).order_by(Yell.yell_id.desc())
+        ).scalar()
+    elif yell_id == 'rated':
+        query = db.session.execute(
+            db.select(Yell).order_by(Yell.yell_rating.desc())
+        ).scalar()
+    else:
+        query = db.session.get(Yell, yell_id)
+        db.session.get
+    if not query:
+        return '404'
+
+    print(query.yell_type)
+    match (query.yell_type):
+        case 'pst':
+            post = db.session.execute(
+                db.select(Post).filter_by(base_yell_id=query.yell_id)
+            ).scalar()
+            if not post:
+                return '404'
+            return jsonify(
+                yell_id=query.yell_id,
+                yell_title=query.yell_title,
+                author=query.author.username,
+                yell_rating=query.yell_rating,
+                yell_datetime=query.yell_datetime.isoformat(),
+                yell_type=query.yell_type,
+                post_code=post.post_code,
+                post_description=post.post_description,
+                post_filename=post.post_filename,
+            )
+
+        case 'req':
+            req = db.session.execute(
+                db.select(Request).filter_by(base_yell_id=query.yell_id)
+            ).scalar()
+            if not req:
+                return '404'
+            return jsonify(
+                # yell_id=query.yell_id,
+                yell_title=query.yell_title,
+                author=query.author.username,
+                yell_rating=query.yell_rating,
+                yell_datetime=query.yell_datetime.isoformat(),
+                yell_type=query.yell_type,
+                request_content=req.request_content,
+            )
+        case 'com':
+            post = db.session.execute(
+                db.select(Post).filter_by(base_yell_id=query.yell_id)
+            ).scalar()
+            if not post:
+                return '404'
+            return jsonify(
+                # yell_id=query.yell_id,
+                yell_title=query.yell_title,
+                author=query.author.username,
+                yell_rating=query.yell_rating,
+                yell_type=query.yell_type,
+                yell_datetime=query.yell_datetime.isoformat(),
+                post_code=post.post_code,
+                post_description=post.post_description,
+                post_filename=post.post_filename,
+            )
+        case _:
+            return '404'
+    # except:
+    #     return '404'   # }}}
+@app.route('/api/request/<yell_id>')  # {{{
+# @login_required
+def get_request(request_id):
+    if yell_id == 'last':
+        query = db.session.execute(
+            db.select(Yell).order_by(Yell.yell_id.desc())
+        ).scalar()
+    elif yell_id == 'rated':
+        query = db.session.execute(
+            db.select(Yell).order_by(Yell.yell_rating.desc())
+        ).scalar()
+    else:
+        query = db.session.get(Yell, yell_id)
+        db.session.get
+    if not query:
+        return '404'
+
+    print(query.yell_type)
     match (query.yell_type):
         case 'pst':
             post = db.session.execute(
@@ -643,8 +793,7 @@ def get_yell(yell_id):
     # except:
     #     return '404'   # }}}
 
-
-@sock.route('/yell/search/<searched>')  # {{{
+@sock.route('/api/yell/search/<searched>')  # {{{
 # @login_required
 def get_yell_multi(ws, searched):
     all = db.session.execute(db.select(Yell)).scalars().all()
