@@ -3,9 +3,22 @@
 #### Description: A code sharing solution that allows users to share and request code with a clean and intuitive look.
 #### Currently now live at ~~probably not~~: https://gravitationally.online
 
-### [Screenshots](code-snips/screenshots):
+# Table of Contents
+1. [Screenshots](#screenshots)
+2. [Introduction](#share-code-solutions-with-other-programmers)
+3. [Structure](#how-its-structured)
+    1. [Frontend](#frontend)
+    2. [Backend](#backend)
+        - [Additional Tools](#here-are-some-of-the-python-libraries-that-helped-in-the-backend)
+    3. [Database](#database)
+4. [Small message](#message)
+5. [Deployment](#deploying)
+
+
+## [Screenshots](code-snips/screenshots)
 <img src="screenshots/screenshot.png">
 <img src="screenshots/screenshot2.png">
+<img src="screenshots/screenshot3.png">
 <img src="screenshots/screenshot5.png">
 
 ### Share code solutions with other programmers
