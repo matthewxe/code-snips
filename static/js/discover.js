@@ -1,7 +1,6 @@
 const main = document.getElementById("main");
 
 async function get_api(id, type = "yell") {
-
 	const result = await fetch(`/api/${type}/${id}`);
 	return result.json();
 }
@@ -29,7 +28,7 @@ function create_base_card(json) {
 	const title = document.createElement("a");
 	title.className = "pe-5 flex-grow-1 fs-3 card-title";
 	title.innerHTML = json["base_title"];
-	title.href = `/${json["base_type"]}/${json["content_id"]}/report`;
+	title.href = `/${json["base_type"]}/${json["content_id"]}`;
 
 	const dropdown = document.createElement("div");
 	dropdown.className = "dropdown";
@@ -45,22 +44,42 @@ function create_base_card(json) {
 	const report_a = document.createElement("a");
 	report_a.className = "dropdown-item text-danger";
 	report_a.href = `/${json["base_type"]}/${json["content_id"]}/report`;
-	report_a.innerHTML = "Report";
-
-	if 
-	const edit = document.createElement("li");
-	const edit_a = document.createElement("a");
-	edit_a.className = "dropdown-item text-danger";
-	edit_a.href = `/${json["base_type"]}/${json["content_id"]}/report`;
-	edit_a.innerHTML = "Report";
-	const delete = document.createElement("li");
-	const delete_a = document.createElement("a");
-	delete_a.className = "dropdown-item text-danger";
-	delete_a.href = `/${json["base_type"]}/${json["content_id"]}/report`;
-	delete_a.innerHTML = "Report";
-
-
+	report_a.innerHTML = "Report " + json["base_type"];
 	report.appendChild(report_a);
+
+	console.log(json["owned"]);
+	if (json["owned"] == true) {
+		if (json["base_type"] == "request") {
+			const mark = document.createElement("li");
+			const mark_a = document.createElement("a");
+			mark_a.className = "dropdown-item text-success";
+			mark_a.href = `/request/${json["content_id"]}/mark`;
+			if (json["request_state"] == false) {
+				mark_a.innerHTML = "Mark request as Completed";
+			} else if (json["request_state"] == true) {
+				mark_a.innerHTML = "Mark request as Open";
+			}
+			mark.appendChild(mark_a);
+			dropdown_menu.appendChild(mark);
+		}
+
+		// const edit = document.createElement("li");
+		// const edit_a = document.createElement("a");
+		// edit_a.className = "dropdown-item";
+		// edit_a.href = `/${json["base_type"]}/${json["content_id"]}/edit`;
+		// edit_a.innerHTML = "Edit " + json["base_type"];
+		// edit.appendChild(edit_a);
+		// dropdown_menu.appendChild(edit);
+		//
+		// const remove = document.createElement("li");
+		// const remove_a = document.createElement("a");
+		// remove_a.className = "dropdown-item text-danger";
+		// remove_a.href = `/${json["base_type"]}/${json["content_id"]}/delete`;
+		// remove_a.innerHTML = "Delete " + json["base_type"];
+		// remove.appendChild(remove_a);
+		// dropdown_menu.appendChild(remove);
+	}
+
 	dropdown_menu.appendChild(report);
 	dropdown.appendChild(dropdown_menu);
 
@@ -185,11 +204,11 @@ function create_request_card(json) {
 	const made_inLang = document.createElement("p");
 	made_inLang.className = "ps-1 pe-3 align-middle";
 	const solved = json["request_state"];
+	console.log(solved);
 	if (solved == true) {
 		made_inLang.className += " text-secondary";
 		made_inLang.innerHTML = "Solved";
-	}
-	if (solved == false) {
+	} else if (solved == false) {
 		made_inLang.className += " text-success";
 		made_inLang.innerHTML = "Open";
 	} else {
@@ -257,9 +276,31 @@ function create_comment(json) {
 	// title.className = "pe-5 flex-grow-1 fs-3 comment-title";
 	content.className = "card-title";
 	content.innerHTML = json["comment_content"];
-	content.href = `/comment/${json["content_id"]}`
+	content.href = `/comment/${json["content_id"]}`;
 
 	comment.appendChild(content);
+
+	const dropdown = document.createElement("div");
+	dropdown.className = "dropdown";
+	const icon = document.createElement("button");
+	icon.className = "navbar-toggler-icon btn";
+	icon.type = "button";
+	icon.dataset.bsToggle = "dropdown";
+	icon.ariaExpanded = "false";
+	dropdown.appendChild(icon);
+	const dropdown_menu = document.createElement("ul");
+	dropdown_menu.className = "dropdown-menu";
+	const report = document.createElement("li");
+	const report_a = document.createElement("a");
+	report_a.className = "dropdown-item text-danger";
+	report_a.href = `/${json["base_type"]}/${json["content_id"]}/report`;
+	report_a.innerHTML = "Report " + json["base_type"];
+	report.appendChild(report_a);
+
+	dropdown_menu.appendChild(report);
+	dropdown.appendChild(dropdown_menu);
+
+	lower_container.appendChild(dropdown);
 
 	return comment;
 } //}}}
@@ -277,7 +318,7 @@ async function start_like_classes(like, json) {
 	};
 	const tolike = async () => {
 		const try_like = await fetch(
-			`/${json["base_type"]}/${json["content_id"]}/like`
+			`/${json["base_type"]}/${json["content_id"]}/like`,
 		);
 		const try_like_data = await try_like.text();
 
@@ -297,7 +338,7 @@ async function start_like_classes(like, json) {
 
 	const tounlike = async () => {
 		const try_like = await fetch(
-			`/${json["base_type"]}/${json["content_id"]}/unlike`
+			`/${json["base_type"]}/${json["content_id"]}/unlike`,
 		);
 		const try_like_data = await try_like.text();
 
@@ -313,7 +354,7 @@ async function start_like_classes(like, json) {
 		}
 	};
 	const status = await fetch(
-		`/${json["base_type"]}/${json["content_id"]}/status`
+		`/${json["base_type"]}/${json["content_id"]}/status`,
 	);
 	const status_data = await status.text();
 	// console.log(status_data, json);
@@ -346,9 +387,7 @@ function create_footer(json) {
 	}
 
 	replies.className = "btn btn-dark btn-sm";
-	replies.href = `/${json["base_type"]}/${json["content_id"]}`
-
-
+	replies.href = `/${json["base_type"]}/${json["content_id"]}`;
 
 	if (json["base_comments"] > 0) {
 		const badge = document.createElement("span");
