@@ -410,7 +410,7 @@ def post():
         clean_description = markdown(
             clean(description),
             extensions=[
-                codehilite(pygments_style='one-dark'),
+                codehilite(css_class='highlight', pygments_style='one-dark'),
                 fenced_code(),
             ],
         )
