@@ -2,12 +2,9 @@ flask
 flask_sock
 flask_sqlalchemy
 sqlalchemy
-sqlalchemy.orm
 flask_bcrypt
 flask_login
-gunicorn
-html-sanitizer
-bleach
+pyuwsgi
 markdown
 jarowinkler
 nh3
