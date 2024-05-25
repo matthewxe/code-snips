@@ -5,3 +5,6 @@ sqlalchemy.orm
 flask_bcrypt
 flask_login
 gunicorn
+bleach
+markdown
+jarowinkler

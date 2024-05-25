@@ -1,14 +1,5 @@
 @import url(https://fonts.googleapis.com/css?family=Fira+Code);
 
-.codeArea {
-        font-family: "Fira Code";
-}
-
-html,
-body {
-        height: 100%;
-}
-
 #ace-editor {
         min-height: 100px;
 }
