@@ -14,3 +14,7 @@
 #main {
         gap: 2rem;
 }
+
+#warn {
+        display: none;
+}

@@ -6,5 +6,6 @@ flask_bcrypt
 flask_login
 pyuwsgi
 markdown
-jarowinkler
+pygments
+rapidfuzz
 nh3

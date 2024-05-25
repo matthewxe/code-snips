@@ -1,8 +1,9 @@
 {% extends "template.html" %}
 {% block head %}
 <link href="../static/css/post.css" rel="stylesheet" />
-<script defer src="https://cdn.jsdelivr.net/npm/ace-builds@1.32.2/src-min-noconflict/ace.min.js"></script>
-<script defer type="module" src="../static/js/post.js"></script>
+<script defer src="../static/npm/node_modules/ace-builds/src-min-noconflict/ace.js"></script>
+<script defer src="../static/npm/node_modules/ace-builds/src-min-noconflict/ext-modelist.js"></script>
+<script defer src="../static/js/post.js"></script>
 {% endblock %}
 {% block title %}Create -{% endblock %}
 {% block body %}
@@ -29,28 +30,13 @@
 	</div>
 </div>
 <div class="card container-md p-3 mb-3">
-	<h3>Code</h3>
 	<div class="container text-center">
-		<div class="row">
-			<div class="col-5">
-				<select required id="language" form="form" name="language" class="form-select form-select-lg w-3 mb-3"
-					aria-label="Small select example">
-					<option disabled selected value="">Language</option>
-					{% for key, value in languages.items() %}
-					<option value="{{ value.ace }},{{ key }}">{{ value.name }}</option>
-					{% endfor
-					%}
-				</select>
+		<div class="d-flex justify-content-spaced-evenly">
+			<div class="flex-grow-1 me-5">
+				<input required id="filename" form="form" name="filename" placeholder="Filename"
+					class="form-control form-control-lg w-3 mb-3">
 			</div>
-			<!-- <div class="col-3"> -->
-			<!-- 	<input id="editorMax"
- 	       type="number"
- 	       min="4"
- 	       class="form-control form-control-lg w-1 mb-3 me-auto"
- 	       -->
-			<!-- 		placeholder="Height editor"> -->
-			<!-- </div> -->
-			<div class="col-2">
+			<div>
 				<select id="tabSize" class="form-select form-select-lg w-3 mb-3 me-auto">
 					<option disabled selected>Tab Size</option>
 					<option value=2>2</option>
@@ -58,19 +44,14 @@
 					<option value=8>8</option>
 				</select>
 			</div>
-			<!-- <div class="col-2"> -->
-			<!-- 	<select id="wrapMode" class="form-select form-select-lg w-3 mb-3 me-auto"> -->
-			<!-- 		<option disabled selected>Wrap Mode</option> -->
-			<!-- 		<option value=false>No Wrap</option> -->
-			<!-- 		<option value=true>Yes Wrap</option> -->
-			<!-- 	</select> -->
-			<!-- </div> -->
 		</div>
 	</div>
 	<div class="input-group mb-3"></div>
 	<div class="card fs-5">
+		<span style="display: absolute; z-index: 1"></span>
 		<div id="ace-editor" class="fs-5"></div>
 	</div>
+	<script src="../static/js/require.js"></script>
 </div>
 <div class="container-fluid justify-content-center d-flex">
 	<button id="submit_button" name="code" form="form" class="text-center btn btn-primary" type="submit">Submit</button>

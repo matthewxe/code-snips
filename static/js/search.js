@@ -1,13 +1,16 @@
-import { add_card_byid } from "./discover.js";
+import { add_card_byid, stop_spinner } from "./discover.js";
 
 const query = document.getElementById("searchup").dataset["query"];
 const next = document.getElementById("next");
 const socket = new WebSocket("ws://" + location.host + "/yell/search/" + query);
 
 socket.addEventListener("message", (ev) => {
-	// var data = ev.data;
-	// console.log(typeof data);
-	// console.log(data);
+	console.log(ev.data);
+	if (ev.data === "404") {
+		stop_spinner();
+		socket.removeEventListener("message", self);
+		return "shitass";
+	}
 	add_card_byid(ev.data);
 });
 

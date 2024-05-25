@@ -1,27 +1,18 @@
-var editor = ace.edit("ace-editor", {
+const editor = ace.edit("ace-editor", {
 	maxLines: 25,
-	theme: "ace/theme/tomorrow_night",
+	theme: "ace/theme/one_dark",
 	fontFamily: "Fira Code",
 });
 
-var language_select = document.getElementById("language");
-language_select.addEventListener("input", function() {
-	var selected =
-		language_select.options[language_select.selectedIndex].value.split(",")[0];
-	console.log(language_select.options[language_select.selectedIndex].value);
-	console.log(selected);
-
-	editor.session.setMode("ace/mode/" + selected);
+const modelist = ace.require("ace/ext/modelist");
+const filename = document.getElementById("filename");
+filename.addEventListener("input", function() {
+	const filePath = filename.value;
+	const mode = modelist.getModeForPath(filePath).mode;
+	editor.session.setMode(mode); // mode now contains "ace/mode/javascript".
 });
 
-// var editor_max = document.getElementById("editorMax");
-// editor_max.addEventListener("input", function() {
-// 	editor.setOptions({
-// 		maxLines: editor_max.value,
-// 	});
-// });
-
-var tab_size = document.getElementById("tabSize");
+const tab_size = document.getElementById("tabSize");
 tab_size.addEventListener("input", function() {
 	editor.session.setTabSize(tab_size.value);
 });

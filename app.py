@@ -6,10 +6,6 @@ from flask import (
     url_for,
     jsonify,
 )
-from json import dumps, loads
-from flask_sock import Sock
-from flask_sqlalchemy import SQLAlchemy
-from flask_bcrypt import Bcrypt
 from flask_login import (
     UserMixin,
     LoginManager,
@@ -18,42 +14,24 @@ from flask_login import (
     logout_user,
     login_required,
 )
+from flask_sock import Sock
+from flask_sqlalchemy import SQLAlchemy
+from flask_bcrypt import Bcrypt
 from nh3 import clean, clean_text
-from markdown import markdown
-from jarowinkler import jarowinkler_similarity
+from markdown import extensions, markdown
+from markdown.extensions.fenced_code import FencedCodeExtension as fenced_code
+from markdown.extensions.codehilite import CodeHiliteExtension as codehilite
+from rapidfuzz import fuzz
 from datetime import datetime
-
-# LOGGING FOMAT
-# def log(message, typeoflog):
-# def log(messages):
-#     escapecode = '\033[100;92mLOG ::'
-#     if type(messages) is list:
-#         for message in messages:
-#             print(escapecode + str(message) + '\033[0m')
-#     else:
-#         print(escapecode + str(messages) + '\033[0m')
+from pygments import highlight
+from pygments.lexers import get_lexer_for_filename, guess_lexer_for_filename
+from pygments.formatters import HtmlFormatter
 
 
-# Supported Languages{{{
-class Lang:
-    def __init__(self, name, ace, prism):
-        self.name = name
-        self.ace = ace
-        self.prism = prism
+# Print decorators
+LOG = '\033[100;92mLOG ::'
+END = '\033[0m'
 
-    def __repr__(self):
-        return f'<Lang {self.name}'
-
-
-SUPPORTED_LANGS = {
-    'python': Lang('Python', 'python', 'python'),
-    'html': Lang('HTML', 'html', 'html'),
-    'css': Lang('CSS', 'css', 'css'),
-    'javascript': Lang('Javascript', 'javascript', 'javascript'),
-    'c': Lang('C', 'c_cpp', 'c'),
-    'gdscript': Lang('GDScript', 'python', 'gdscript'),
-    'csharp': Lang('C#', 'csharp', 'csharp'),
-}  # }}}
 
 # Flask Setup {{{
 app = Flask(__name__)
@@ -61,27 +39,16 @@ sock = Sock(app)
 app.config['SOCK_SERVER_OPTIONS'] = {'ping_interval': 7}
 from os import urandom
 
-import os
-from flask import send_from_directory
-
-
-@app.route('/favicon.ico')
-def favicon():
-    return send_from_directory(
-        os.path.join(app.root_path, 'static'),
-        '/img/favicon.ico',
-        mimetype='image/vnd.microsoft.icon',
-    )
-
-
+app.config['SECRET_KEY'] = urandom(24)
 # Bcrypt Setup
 bcrypt = Bcrypt(app)
 
 # Login manager setup
 login_manager = LoginManager()
 login_manager.init_app(app)
+# }}}
 
-# Flask-SQLAlchemy
+# Flask-SQLAlchemy{{{
 db = SQLAlchemy()
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 db.init_app(app)
@@ -107,7 +74,7 @@ class Post(db.Model):
     yell_title = db.Column(db.String(100), nullable=False)
     yell_description = db.Column(db.String(1000), nullable=False)
     yell_code = db.Column(db.Text, nullable=False)
-    yell_language = db.Column(db.String, nullable=False)
+    yell_filename = db.Column(db.String, nullable=False)
     yell_rating = db.Column(db.Float, nullable=False, default=0)
     yell_datetime = db.Column(
         db.DateTime, nullable=False, default=datetime.now()
@@ -142,37 +109,34 @@ class Request(UserMixin, db.Model):
 
 with app.app_context():
     db.create_all()
+# }}}
 
 
+# Other{{{
 @login_manager.user_loader
-def load_user(user_id):
-    print(User.query.get(user_id))
-    return User.query.get(user_id)
+def load_user(id):
+    # print(LOG, User.query.get(id), id, END)
+    return User.query.get(id)
+
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return redirect('/')
 
 
 # }}}
 
 
-@app.errorhandler(404)  # {{{
-def page_not_found(e):
-    return redirect('/')  # }}}
-
-
 @app.route('/')  # {{{
 def index():
+    if current_user.is_active:
+        print(current_user.username, current_user.hash)
+    else:
+        print(current_user.is_anonymous)
+    return render_template('index.html', current_user=current_user)
 
-    # log([User.is_active, User.is_authenticated])
-    # log(
-    #     [
-    #         User.query.all(),
-    #         current_user.get_id(),
-    #         current_user.is_active,
-    #         current_user.is_authenticated,
-    #     ]
-    # )
-    return render_template(
-        'index.html', is_active=current_user.is_active
-    )  # }}}
+
+# }}}
 
 
 @app.route('/register', methods=['GET', 'POST'])  # {{{
@@ -211,7 +175,10 @@ def register():
             )
 
         username = username.lower()
-        if User.query.filter_by(username=username).first():
+        check = db.session.execute(
+            db.select(User).where(User.username == username)
+        ).scalar()
+        if check:
             return render_template(
                 'register.html',
                 warning='That user already exists',
@@ -238,7 +205,9 @@ def login():
                 'login.html', warning='Do not leave the input blank'
             )
         username = username.lower()
-        query = User.query.filter_by(username=username).first()
+        query = db.session.execute(
+            db.select(User).where(User.username == username)
+        ).scalar()
         if not query:
             return render_template(
                 'login.html',
@@ -251,21 +220,30 @@ def login():
         login_user(query)
         return redirect(url_for('index'))
     else:
-        return render_template('login.html')   # }}}
+        return render_template('login.html')
+
+
+# }}}
 
 
 @app.route('/logout')  # {{{
 def logout():
     logout_user()
-    return redirect(url_for('index'))  # }}}
+    return redirect(url_for('index'))
+
+
+# }}}
 
 
 @app.route('/discover')  # {{{
 def discover():
     return render_template(
         'discover.html',
-        is_active=current_user.is_active,
-    )  # }}}
+        current_user=current_user,
+    )
+
+
+# }}}
 
 
 @app.route('/search')  # {{{
@@ -273,131 +251,161 @@ def search():
     # print(request.args.get('q'))
     return render_template(
         'discover.html',
-        is_active=current_user.is_active,
+        current_user=current_user,
         search=request.args.get('q'),
-    )  # }}}
+    )
+
+
+# }}}
 
 
 @app.route('/create')  # {{{
 def create_menu():
     return render_template(
         'create.html',
-        is_active=current_user.is_active,
-    )  # }}}
+        search=request.args.get('q'),
+    )
 
 
-@app.route('/create/<typeofpost>', methods=['GET', 'POST'])  # {{{
+# }}}
+
+
+@app.route('/create/post', methods=['GET', 'POST'])  # {{{
 @login_required
-def create(typeofpost):
-    if not typeofpost:
+def post():
+    if request.method == 'POST':
+        send_error = lambda render_template, warning: render_template(
+            'post.html',
+            warning=warning,
+            current_user=current_user,
+        )
+        user_id = current_user.get_id()
+        if not user_id:
+            return send_error(render_template, 'yuh')
+
+        title = request.form.get('title')
+        if not title:
+            return send_error(render_template, 'Must provide a title.')
+        description = request.form.get('description')
+        if not description:
+            return send_error(render_template, 'Must provide a description.')
+        filename = request.form.get('filename')
+        if not filename:
+            return send_error(render_template, 'Must have a file name.')
+        code = request.form.get('code')
+        if not code:
+            return send_error(render_template, 'Must provide code.')
+
+        elif not len(title) >= 3 and not len(title) <= 100:
+            return send_error(
+                render_template,
+                'Titles must be atleast 3 characters long and a maximum of 100',
+            )
+        elif not len(description) >= 3 and not len(description) <= 1000:
+            return send_error(
+                render_template,
+                'Description must be atleast 3 characters long and a maximum of 1000',
+            )
+
+        title = clean(title)
+        description = clean(
+            markdown(
+                description,
+                extensions=[
+                    codehilite(pygments_style='one-dark'),
+                    fenced_code(),
+                ],
+            )
+        )
+        # code = clean_text(code)
+        filename = clean_text(filename)
+        print(LOG, title, description, code, filename, END)
+
+        try:
+            lexer = guess_lexer_for_filename(filename, code)
+            code = highlight(
+                code, lexer, HtmlFormatter(style='one-dark', lineos='table')
+            )
+        except:
+            code = clean_text(code)
+
+        print(LOG, code, END)
+        db.session.add(
+            Post(
+                yell_maker_id=user_id,
+                yell_title=title,
+                yell_description=description,
+                yell_code=code,
+                yell_filename=filename,
+            )
+        )
+        db.session.commit()
+
+        return redirect(url_for('index'))
+    else:
+        return render_template(
+            'post.html',
+            current_user=current_user,
+        )
+
+
+@app.route('/create/request', methods=['GET', 'POST'])  # {{{
+@login_required
+def post_request():
+    if request.method == 'POST':
+        return render_template('post_request.html')
+    else:
         return redirect(url_for('index'))
 
-    match (typeofpost):
-        case 'post':
-            if request.method == 'POST':
-                send_error = lambda render_template, warning: render_template(
-                    'post.html',
-                    warning=warning,
-                    is_active=current_user.is_active,
-                    languages=SUPPORTED_LANGS,
-                )
-                user_id = current_user.get_id()
-                if not user_id:
-                    return send_error(render_template, 'yuh')
 
-                title = request.form.get('title')
-                if not title:
-                    return send_error(render_template, 'Must provide a title.')
-                description = request.form.get('description')
-                if not description:
-                    return send_error(
-                        render_template, 'Must provide a description.'
-                    )
-                language = request.form.get('language')
-                if not language:
-                    return send_error(
-                        render_template, 'Must choose a supported language.'
-                    )
-                language = language.split(',')[1]
-                code = request.form.get('code')
-                if not code:
-                    return send_error(render_template, 'Must provide code.')
-
-                elif not len(title) >= 3 and not len(title) <= 100:
-                    return send_error(
-                        render_template,
-                        'Titles must be atleast 3 characters long and a maximum of 100',
-                    )
-                elif (
-                    not len(description) >= 3 and not len(description) <= 1000
-                ):
-                    return send_error(
-                        render_template,
-                        'Description must be atleast 3 characters long and a maximum of 1000',
-                    )
-                elif not SUPPORTED_LANGS.get(language):
-                    return send_error(
-                        render_template,
-                        'Must choose a supported language',
-                    )
-
-                # print(title, description, code)
-                title = clean(title)
-                description = clean(markdown(description))
-                code = clean_text(code)
-                # print(title, description, code)
-                db.session.add(
-                    Post(
-                        yell_maker_id=user_id,
-                        yell_title=title,
-                        yell_description=description,
-                        yell_code=code,
-                        yell_language=language,
-                    )
-                )
-                db.session.commit()
-
-                return redirect(url_for('index'))
-            else:
-                return render_template(
-                    'post.html',
-                    is_active=current_user.is_active,
-                    languages=SUPPORTED_LANGS,
-                )
-        case 'request':
-            return render_template('post_request.html')
-        case _:
-            return redirect(url_for('index'))   # }}}
+# }}}
 
 
 @app.route('/yell/<yell_id>')  # {{{
 def get_yell(yell_id):
     if yell_id == 'last':
-        query = Post.query.order_by(Post.yell_id.desc()).first()
-        # print(query)
+        query = db.session.execute(
+            db.select(Post).order_by(Post.yell_id.desc())
+        ).scalar()
     else:
-        query = Post.query.filter_by(yell_id=yell_id).first()
+        query = db.session.execute(
+            db.select(Post).where(Post.yell_id == yell_id)
+        ).scalar()
+    print(query)
     if not query:
         return '404'
 
-    langs = SUPPORTED_LANGS.get(query.yell_language)
-    try:
-        return jsonify(
-            yell_id=query.yell_id,
-            yell_maker_id=query.yell_maker_id,
-            yell_maker=User.query.filter_by(id=query.yell_maker_id)
-            .first()
-            .username,
-            yell_language=langs.name,
-            yell_language_prism=langs.prism,
-            yell_title=query.yell_title,
-            yell_rating=query.yell_rating,
-            yell_description=query.yell_description,
-            yell_code=query.yell_code,
-            yell_datetime=query.yell_datetime,
+    # try:
+    return jsonify(
+        yell_id=query.yell_id,
+        yell_maker_id=query.yell_maker_id,
+        yell_maker=db.session.execute(
+            db.select(User).where(User.id == query.yell_maker_id)
         )
-    except:
-        return '404'   # }}}
+        .scalar()
+        .username,
+        yell_filename=query.yell_filename,
+        yell_title=query.yell_title,
+        yell_rating=query.yell_rating,
+        yell_description=query.yell_description,
+        yell_code=query.yell_code,
+        yell_datetime=query.yell_datetime,
+    )
+    # except:
+    #     return '404'   # }}}
+
+
+def send_temp_dict(ws, temp_dict):
+    temp_dict = dict(
+        sorted(
+            temp_dict.items(),
+            key=lambda item: item[1],
+            reverse=True,
+        )
+    )
+    print(temp_dict)
+    for result in temp_dict:
+        ws.send(result)
 
 
 @sock.route('/yell/search/<searched>')  # {{{
@@ -407,22 +415,16 @@ def get_yell_multi(ws, searched):
     # else:
     #     session['ws'] = ws
     # print('socketd', ws, searched)
-    all = Post.query.all()
+
+    all = db.session.execute(db.select(Post)).scalars().all()
+    threshold = 80
     temp_dict = {}
     # print('not waiting')
     for idx, query in enumerate(all, 1):
         # print(idx)
-        if idx % 15 == 0:
+        if len(temp_dict) >= 15:
 
-            temp_dict = dict(
-                sorted(
-                    temp_dict.items(),
-                    key=lambda item: item[1],
-                    reverse=True,
-                )
-            )
-            for result in temp_dict:
-                ws.send(result)
+            send_temp_dict(ws, temp_dict)
             temp_dict = {}
             while True:
                 data = ws.receive()
@@ -431,67 +433,64 @@ def get_yell_multi(ws, searched):
                     break
 
         temp_dict[query.yell_id] = 0
-        langs = SUPPORTED_LANGS.get(query.yell_language)
-        ass = dict(
-            yell_id=query.yell_id,
-            yell_maker_id=query.yell_maker_id,
-            yell_maker=User.query.filter_by(id=query.yell_maker_id)
-            .first()
-            .username,
-            yell_language=langs.name,
-            yell_language_prism=langs.prism,
-            yell_title=query.yell_title,
-            yell_rating=query.yell_rating,
-            yell_description=query.yell_description,
-            yell_code=query.yell_code,
-            yell_datetime=str(query.yell_datetime),
-        )
-        for key in ass:
-            temp_dict[query.yell_id] += jarowinkler_similarity(
-                str(searched), str(ass[key])
-            )
+        eval = [
+            query.yell_datetime,
+            query.yell_description,
+            query.yell_code,
+            query.yell_filename,
+            query.yell_title,
+        ]
+        for idx, item in enumerate(eval):
+            ratio = fuzz.ratio(str(searched), str(item))
+            temp_dict[query.yell_id] += ratio * idx
+        temp_dict[query.yell_id] /= 5
+        print(temp_dict)
+        if temp_dict[query.yell_id] < threshold:
+            temp_dict.pop(query.yell_id)
+    send_temp_dict(ws, temp_dict)
+    ws.send('404')
 
 
 # }}}
 
 
-# def insert_random(db, max):  # {{{
-#     import random, string
-#
-#     def randomword(length):
-#         letters = string.ascii_lowercase
-#         return ''.join(random.choice(letters) for i in range(length))
-#
-#     for i in range(max):
-#         # print(i)
-#
-#         fake_user = i
-#         # fake_user = random.randint(0, max)
-#         db.session.add(
-#             User(
-#                 id=fake_user,
-#                 username=randomword(50),
-#                 # hash=bcrypt.generate_password_hash(randomword(50)),
-#                 hash=randomword(50),
-#             )
-#         )
-#         db.session.add(
-#             Post(
-#                 yell_id=i,
-#                 yell_maker_id=fake_user,
-#                 yell_title=randomword(50),
-#                 yell_description=randomword(500),
-#                 yell_code=randomword(1000),
-#                 yell_language=randomword(10),
-#             )
-#         )
-#
-#     db.session.commit()
-#
-#
-# # }}}
+def insert_random(db, max):  # {{{
+    import random, string
+
+    def randomword(length):
+        letters = string.ascii_lowercase
+        return ''.join(random.choice(letters) for i in range(length))
+
+    for i in range(max):
+        # print(i)
+
+        fake_user = i
+        # fake_user = random.randint(0, max)
+        db.session.add(
+            User(
+                id=fake_user,
+                username=randomword(50),
+                # hash=bcrypt.generate_password_hash(randomword(50)),
+                hash=randomword(50),
+            )
+        )
+        db.session.add(
+            Post(
+                yell_id=i,
+                yell_maker_id=fake_user,
+                yell_title=randomword(50),
+                yell_description=randomword(500),
+                yell_code=randomword(1000),
+                yell_filename=randomword(15),
+            )
+        )
+
+    db.session.commit()
+
+
+# }}}
 
 if __name__ == '__main__':
-    # with app.app_context():
-    #     insert_random(db, 1000)
+    with app.app_context():
+        insert_random(db, 10000)
     app.run(host='localhost')
