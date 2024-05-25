@@ -21,7 +21,7 @@ async function append_tags(title, id) {
 
 function create_base_card(json) {
 	//{{{
-	var card = document.createElement("div");
+	const card = document.createElement("div");
 	card.className = "bg-body-tertiary card p-3 flex-grow-1";
 	const title_container = document.createElement("div");
 	title_container.className = "d-flex align-middle";
@@ -30,7 +30,23 @@ function create_base_card(json) {
 	title.innerHTML = json["base_title"];
 	title.href = json["base_type"] + "/" + json["content_id"];
 
+	const dropdown = document.createElement("div");
+	dropdown.className = "dropdown";
+	const icon = document.createElement("button");
+	icon.className = "navbar-toggler-icon btn";
+	icon.type = "button";
+	icon.dataset.bsToggle = "dropdown";
+	icon.ariaExpanded = "false";
+	dropdown.appendChild(icon);
+	const dropdown_menu = document.createElement("ul");
+	dropdown_menu.className = "dropdown-menu";
+	const dropdown_item = document.createElement("li");
+	dropdown_item.innerHTML = " Yeet";
+	dropdown_menu.appendChild(dropdown_item);
+	dropdown.appendChild(dropdown_menu);
+
 	title_container.appendChild(title);
+	title_container.appendChild(dropdown);
 	card.appendChild(title_container);
 	return card;
 } //}}}
@@ -252,14 +268,10 @@ async function start_like_classes(like, json) {
 				window.location.pathname);
 		} else if (try_like_data == "yay") {
 			like.className = "btn-secondary btn btn-sm";
-			const heart = document.createElement("i");
-			heart.className = "bi bi-heart";
-			heart.innerHTML = "Liked";
-			like.appendChild(heart);
-			// like.innerHTML += "Liked";
+			like.innerHTML = "Liked";
 			json["base_rating"]++;
-			badge_add();
 			like.onclick = tounlike;
+			badge_add();
 		}
 	};
 
@@ -276,8 +288,8 @@ async function start_like_classes(like, json) {
 			json["base_rating"]--;
 			like.className = "btn-primary btn btn-sm";
 			like.innerHTML = "Like";
-			badge_add();
 			like.onclick = tolike;
+			badge_add();
 		}
 	};
 	const status = await fetch(
