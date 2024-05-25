@@ -37,6 +37,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from typing import List
+from secrets import token_urlsafe, SystemRandom
 
 # Print decorators
 LOG = '\033[100;92mLOG ::'
@@ -47,9 +48,11 @@ END = '\033[0m'
 app = Flask(__name__)
 sock = Sock(app)
 app.config['SOCK_SERVER_OPTIONS'] = {'ping_interval': 7}
-from os import urandom
+import os
 
-app.config['SECRET_KEY'] = urandom(24)
+print(os.environ.get('SECRET_KEY'), os.environ.get('SECURITY_PASSWORD_SALT'))
+app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
+app.config['SECURITY_PASSWORD_SALT'] = os.environ['SECURITY_PASSWORD_SALT']
 # Bcrypt Setup
 bcrypt = Bcrypt(app)
 
@@ -59,8 +62,13 @@ login_manager.init_app(app)
 # }}}
 
 # Flask-SQLAlchemy Database{{{
-db = SQLAlchemy()
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+}
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy()
 db.init_app(app)
 
 
@@ -115,9 +123,7 @@ class Request(db.Model):
         ForeignKey('yell_table.yell_id'), nullable=False
     )
     base_yell: Mapped['Yell'] = relationship()
-    request_content_id: Mapped[int] = mapped_column(
-        primary_key=True, nullable=False
-    )
+    request_content_id: Mapped[int] = mapped_column(primary_key=True)
     request_content: Mapped[str] = mapped_column(db.Text, nullable=False)
 
     def __repr__(self):
@@ -484,65 +490,41 @@ def req():
         user_id = current_user.get_id()
         title = request.form.get('title')
         content = request.form.get('content')
-        code = request.form.get('code')
+        tags = request.form.get('tags')
         if not user_id:
             return redirect(url_for('register'))
         elif not title:
             return send_error('Must provide a title')
-        elif not description:
-            return send_error('Must provide a description')
-        elif not filename:
-            return send_error('Must have a file name')
-        elif not code:
-            return send_error('Must provide code')
-        elif ' ' in filename:
-            return send_error(
-                'There should not be any whitespace in filenames',
-            )
+        elif not content:
+            return send_error('Must provide a body')
         elif not len(title) >= 3 or not len(title) <= 100:
             return send_error(
                 'Titles must be atleast 3 characters long and a maximum of 100',
             )
-        elif not len(description) >= 3 or not len(description) <= 1000:
+        elif not len(content) >= 3 or not len(content) <= 1000:
             return send_error(
                 'Description must be atleast 3 characters long and a maximum of 1000',
             )
-        elif not len(filename) >= 3 or not len(filename) <= 50:
-            return send_error(
-                'Filenames must be atleast 3 characters long and a maximum of 50',
-            )
 
         title = clean_text(title)
-        filename = clean_text(filename)
-
-        description = clean_text(
+        content = clean_text(
             markdown(
-                description,
+                content,
                 extensions=[
-                    codehilite(pygments_style='one-dark'),
+                    codehilite(
+                        pygments_formatter=HtmlFormatter(
+                            style='one-dark', wrapcode=True
+                        )
+                    ),
                     fenced_code(),
                 ],
             )
         )
 
-        try:
-            lexer = guess_lexer_for_filename(filename, code)
-            code = highlight(
-                code,
-                lexer,
-                HtmlFormatter(
-                    style='one-dark',
-                    linenos='table',
-                    wrapcode=True,
-                ),
-            )
-        except:
-            code = clean_text(code)
-
         yell = Yell(
             author_id=user_id,
             yell_title=title,
-            yell_type='pst',
+            yell_type='req',
         )
         db.session.add(yell)
         db.session.flush()
@@ -570,11 +552,9 @@ def req():
                 db.session.flush()
 
         db.session.add(
-            Post(
+            Request(
                 base_yell_id=yell.yell_id,
-                post_description=description,
-                post_code=code,
-                post_filename=filename,
+                request_content=content,
             )
         )
         db.session.commit()
@@ -582,7 +562,7 @@ def req():
         return redirect(url_for('index'))
     else:
         return render_template(
-            'post.html',
+            'request.html',
             current_user=current_user,
         )
 
