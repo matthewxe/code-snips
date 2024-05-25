@@ -5,7 +5,7 @@ const recent = document.getElementById("recently_uploaded");
 
 async function spinner_replace(id, div) {
 	const get = await add_card_byid(id, "yell", div);
-	console.log(id, get);
+	// console.log(id, get);
 	if (get == "404") {
 		div.innerHTML = "Could not load this post right now.";
 	} else {
@@ -15,6 +15,3 @@ async function spinner_replace(id, div) {
 
 spinner_replace("rated", rated);
 spinner_replace("last", recent);
-
-const get = await add_card_byid("last", "yell");
-console.log(get);

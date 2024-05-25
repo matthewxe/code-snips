@@ -309,7 +309,7 @@ def login():
         else:
             return redirect(url_for('index'))
     else:
-        return render_template('login.html', prev=request.args.get('prev'))
+        return render_template('login.html', warning=request.args.get('warning'), prev=request.args.get('prev'))
 
 
 # }}}
@@ -676,25 +676,69 @@ def yell_page(yell_type, id):
         )  # }}}
 
 # /<any(post, request):yell_type>/<id>/<rate>  {{{
-@app.route( '/<any(post, request, comment):yell_type>/<id>/<rate_type>', methods=["GET", 'POST']
+@app.route( '/<any(post, request, comment):yell_type>/<id>/<any(like, unlike, status):rate_type>', methods=["GET", 'POST']
 )
 # @login_required
 def do_rate(yell_type, id, rate_type):
-    print(rate_type)
-    print(bool( rate_type ))
-    if not bool( rate_type ):
-        return '404'
-    # user_id = current_user.get_id()
-    # if not user_id:
-    #     redirect('/login?prev=' + '/' + yell_type + '/' + id)
-    #
-    # tags = yell
-    # if not tags:
-    #     return '404'
-    # tags = [tag.tag_content for tag in tags]
-    # return jsonify(tags)
+    critic_id = current_user.get_id()
+    if not critic_id and not rate_type == "status":
+        return 'unlogged'
+    # if rate_type != 'like' or rate_type != 'unlike':
+    #     return 'invalid_type'
 
-    return 'ass'
+    match (yell_type):
+        case 'post':
+            data = db.session.get(Post, id)
+        case 'request':
+            data = db.session.get(Request, id)
+        case 'comment':
+            data = db.session.get(Comment, id)
+        case _:
+            return '404'
+    original_yell_id = data.base_yell_id
+    rating = db.session.execute(db.select(Rating).filter_by(original_yell_id=original_yell_id, critic_id=critic_id)).scalar()
+    if not rating:
+        if rate_type == 'unlike':
+            return 'false_unlike'
+        elif rate_type == 'status':
+            return 'False'
+        rate_type == 'like'
+        new_rating = Rating(original_yell_id=original_yell_id, rating=True, critic_id=critic_id)
+        db.session.add(new_rating)
+        db.session.execute(
+            db.update(Yell).filter_by(yell_id=original_yell_id).values(yell_rating=Yell.yell_rating + 1)
+        )
+    else:
+        if rate_type == 'unlike':
+            match (rating.rating):
+                case False:
+                    return 'already_unliked'
+                case True:
+                    db.session.execute(
+                        db.update(Rating)
+                        .filter_by(original_yell_id=original_yell_id, critic_id=critic_id)
+                        .values(rating=False)
+                    )
+                    db.session.execute(
+                        db.update(Yell).filter_by(yell_id=original_yell_id).values(yell_rating=Yell.yell_rating - 1)
+                    )
+        elif rate_type == 'like':
+            match (rating.rating):
+                case True:
+                    return 'already_liked'
+                case False:
+                    db.session.execute(
+                        db.update(Rating)
+                        .filter_by(original_yell_id=original_yell_id, critic_id=critic_id)
+                        .values(rating=True)
+                    )
+                    db.session.execute(
+                        db.update(Yell).filter_by(yell_id=original_yell_id).values(yell_rating=Yell.yell_rating + 1)
+                    )
+        elif rate_type == 'status':
+            return str( rating.rating )
+    db.session.commit()
+    return 'yay'
 
 # }}}
 

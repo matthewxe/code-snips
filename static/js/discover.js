@@ -227,8 +227,84 @@ function create_comment(json) {
 
 	return comment;
 } //}}}
+
+async function start_like_classes(like, json) {
+	const badge_add = async () => {
+		// console.log(json);
+		if (json["base_rating"] > 0) {
+			const badge = document.createElement("span");
+			badge.innerHTML = json["base_rating"];
+			badge.className = "ms-1 badge bg-body-tertiary";
+			like.appendChild(badge);
+			// console.log(json);
+		}
+	};
+	const tolike = async () => {
+		const try_like = await fetch(
+			"/" + json["base_type"] + "/" + json["content_id"] + "/like",
+		);
+		const try_like_data = await try_like.text();
+
+		// console.log(try_like_data);
+		if (try_like_data == "unlogged") {
+			return (location.href =
+				"/login?warn=You must be logged in to like&prev=" +
+				window.location.pathname);
+		} else if (try_like_data == "yay") {
+			like.className = "btn-secondary btn btn-sm";
+			const heart = document.createElement("i");
+			heart.className = "bi bi-heart";
+			heart.innerHTML = "Liked";
+			like.appendChild(heart);
+			// like.innerHTML += "Liked";
+			json["base_rating"]++;
+			badge_add();
+			like.onclick = tounlike;
+		}
+	};
+
+	const tounlike = async () => {
+		const try_like = await fetch(
+			"/" + json["base_type"] + "/" + json["content_id"] + "/unlike",
+		);
+		const try_like_data = await try_like.text();
+
+		if (try_like_data == "unlogged") {
+			return (location.href = "/login?prev=" + window.location.pathname);
+		} else if (try_like_data == "yay") {
+			// console.log(try_like_data);
+			json["base_rating"]--;
+			like.className = "btn-primary btn btn-sm";
+			like.innerHTML = "Like";
+			badge_add();
+			like.onclick = tolike;
+		}
+	};
+	const status = await fetch(
+		"/" + json["base_type"] + "/" + json["content_id"] + "/status",
+	);
+	const status_data = await status.text();
+	// console.log(status_data, json);
+	switch (status_data) {
+		case "True":
+			like.className = "btn-secondary btn btn-sm";
+			like.innerHTML = "Liked";
+			like.onclick = tounlike;
+			break;
+		case "False":
+			like.className = "btn-primary btn btn-sm";
+			like.innerHTML = "Like";
+			like.onclick = tolike;
+			break;
+		default:
+			like.innerHTML = "404";
+	}
+	badge_add();
+}
+
 function create_footer(json) {
 	const footer = document.createElement("div"); //{{{
+	footer.className = "d-flex justify-content-between pt-3";
 
 	const replies = document.createElement("a");
 	if (json["base_type"] == "comment") {
@@ -237,7 +313,7 @@ function create_footer(json) {
 		replies.innerHTML = "Comments";
 	}
 
-	replies.className = "btn btn-dark mt-1 btn-sm";
+	replies.className = "btn btn-dark btn-sm";
 	replies.href = json["base_type"] + "/" + json["content_id"];
 
 	if (json["base_comments"] > 0) {
@@ -247,6 +323,10 @@ function create_footer(json) {
 		replies.appendChild(badge);
 	}
 	footer.appendChild(replies);
+
+	const like = document.createElement("a");
+	start_like_classes(like, json);
+	footer.appendChild(like);
 	return footer;
 }
 //}}}
@@ -257,9 +337,9 @@ async function add_card_byid(id, type = "yell", div = main) {
 		console.log("failed request for post", id, type);
 		return "404";
 	}
-	console.log(get);
+	// console.log(get);
 	type = get["base_type"];
-	console.log(type);
+	// console.log(type);
 	switch (type) {
 		case "pst":
 		case "post":
@@ -277,7 +357,7 @@ async function add_card_byid(id, type = "yell", div = main) {
 			var card = create_comment(get);
 			break;
 		default:
-			console.log("unkown type", type);
+			// console.log("unkown type", type);
 			return "404";
 	}
 
