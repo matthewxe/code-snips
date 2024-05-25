@@ -80,7 +80,7 @@ class Yell(db.Model):
         return f'<Yell {self.yell_id} {self.yell_title}>'
 
 
-class Pst(db.Model):
+class Post(db.Model):
     post_content_id = db.Column(db.Integer, primary_key=True, nullable=False)
     original_yell_id = db.Column(
         db.Integer, db.ForeignKey('yell.yell_id'), nullable=False
@@ -90,10 +90,10 @@ class Pst(db.Model):
     post_filename = db.Column(db.String(50), nullable=False)
 
     def __repr__(self):
-        return f'<Pst id: {self.post_content_id} original: {self.original_yell_id}>'
+        return f'<Post id: {self.post_content_id} original: {self.original_yell_id} content: {self.post_filename}>'
 
 
-class Req(db.Model):
+class Request(db.Model):
     request_content_id = db.Column(
         db.Integer, primary_key=True, nullable=False
     )
@@ -102,17 +102,8 @@ class Req(db.Model):
     )
     request_content = db.Column(db.Text, nullable=False)
 
-
-class Tag(db.Model):
-    tag_id = db.Column(db.Integer, primary_key=True)
-    original_yell_id = db.Column(
-        db.Integer, db.ForeignKey('yell.yell_id'), nullable=False
-    )
-    tag_content = db.Column(db.String, nullable=False)
-    tag_type = db.Column(db.String, nullable=False)
-
     def __repr__(self):
-        return f'<Tag {self.tag_id} {self.tag_content}>'
+        return f'<Request id: {self.request_content_id} original: {self.original_yell_id} content: {self.request_content}>'
 
 
 class Comment(db.Model):
@@ -121,14 +112,20 @@ class Comment(db.Model):
         db.Integer, db.ForeignKey('yell.yell_id'), nullable=False
     )
     comment_content = db.Column(db.String, nullable=False)
-    comment_datetime = db.Column(
-        db.DateTime,
-        nullable=False,
-        default=datetime.utcnow(),
-    )
 
     def __repr__(self):
-        return f'<Comment {self.comment_id} {self.comment_content}>'
+        return f'<Comment id: {self.comment_id} original: {self.original_yell_id} content: {self.comment_content}>'
+
+
+class Tag(db.Model):
+    tag_id = db.Column(db.Integer, primary_key=True)
+    original_yell_id = db.Column(
+        db.Integer, db.ForeignKey('yell.yell_id'), nullable=False
+    )
+    tag_content = db.Column(db.String(30), nullable=False)
+
+    def __repr__(self):
+        return f'<Tag id: {self.tag_id} original: {self.original_yell_id} content: {self.tag_content}>'
 
 
 with app.app_context():
