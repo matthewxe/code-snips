@@ -148,10 +148,12 @@ def page_not_found(e):
 
 @app.route('/')  # {{{
 def index():
+
     log([User.is_active, User.is_authenticated])
     log(
         [
             User.query.all(),
+            current_user.get_id(),
             current_user.is_active,
             current_user.is_authenticated,
         ]
@@ -285,10 +287,9 @@ def create(typeofpost):
                     is_active=current_user.is_active,
                     languages=SUPPORTED_LANGS,
                 )
-                user_id = User.query.first()
+                user_id = current_user.get_id()
                 if not user_id:
                     return send_error(render_template, 'yuh')
-                user_id = user_id.id
 
                 title = request.form.get('title')
                 if not title:
@@ -324,6 +325,7 @@ def create(typeofpost):
 
                 description = sanitizer.sanitize(markdown(description))
                 # description = markdown(description)
+                code = sanitizer.sanitize(code)
                 db.session.add(
                     Post(
                         yell_maker_id=user_id,
