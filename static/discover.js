@@ -84,7 +84,7 @@ export async function create_card(get) {
     var code_content_body_pre_code = document.createElement("code");
     code_content_body_pre_code.classList =
         "language-" + get["yell_language_prism"];
-    console.log(get["yell_code_prism"]);
+    // console.log(get["yell_code_prism"]);
     code_content_body_pre_code.innerHTML = get["yell_code"];
     code_content_body_pre.appendChild(code_content_body_pre_code);
     code_content_body.appendChild(code_content_body_pre);
@@ -102,7 +102,7 @@ async function main() {
     var col = 1;
     var get = await get_yell("last");
     for (var index = get["yell_id"]; index > 0; index--) {
-        console.log("yo", index);
+        // console.log("yo", index);
         if (col % 2 != 0) {
             var row = document.createElement("div");
             row.className = "row mb-3";
@@ -112,9 +112,9 @@ async function main() {
         if (get == 404) {
             continue;
 
-            console.log(shit);
+            // console.log(shit);
         }
-        console.log("yo", index, get);
+        // console.log("yo", index, get);
         var card = await create_card(get);
         row.appendChild(card);
         main.appendChild(row);

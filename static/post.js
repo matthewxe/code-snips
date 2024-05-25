@@ -23,7 +23,7 @@ tab_size.addEventListener("input", function() {
 });
 var wrap_mode = document.getElementById("wrapMode");
 wrap_mode.addEventListener("input", function() {
-	console.log(wrap_mode.value);
+	// console.log(wrap_mode.value);
 	editor.session.setUseWrapMode(wrap_mode.value);
 });
 
