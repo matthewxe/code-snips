@@ -162,4 +162,5 @@ cython_debug/
 
 
 # Node
-./static/npm/
+!static/npm/
+static/npm/*
