@@ -24,7 +24,10 @@ async function create_card(json) {
 	const made_by = document.createElement("p");
 	made_by.className = "align-middle flex-grow-1";
 	made_by.innerHTML =
-		"Made by " + json["yell_maker"] + ", " + json["yell_datetime"];
+		"Made by " +
+		json["author"] +
+		", " +
+		new Date(json["yell_datetime"]).toLocaleString();
 	const made_inLang = document.createElement("p");
 	made_inLang.className = "pe-3 align-middle text-info";
 	made_inLang.innerHTML = json["post_filename"];
@@ -110,16 +113,16 @@ async function create_card(json) {
 }
 
 async function add_card_byid(id, div = main) {
-	console.log("request for post", id);
+	// console.log("request for post", id);
 	const get = await get_yell(id);
 	if (get == 404) {
-		console.log("failed request for post", id);
+		// console.log("failed request for post", id);
 		return 404;
 	}
 
 	const card = await create_card(get);
 	div.appendChild(card);
-	console.log("completed request for post", id);
+	// console.log("completed request for post", id);
 }
 
 async function add_card_bydict(dict) {
