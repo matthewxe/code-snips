@@ -21,16 +21,7 @@ var tab_size = document.getElementById("tabSize");
 tab_size.addEventListener("input", function() {
 	editor.session.setTabSize(tab_size.value);
 });
-var wrap_mode = document.getElementById("wrapMode");
-wrap_mode.addEventListener("input", function() {
-	// console.log(wrap_mode.value);
-	editor.session.setUseWrapMode(wrap_mode.value);
-});
 
-var form = document.getElementById("form");
-
-form.onsubmit = () => {
-	var submit_button = document.getElementById("submit_button");
-	var submit_button = document.getElementById("submit_button");
-	submit_button.value = editor.getValue();
+document.getElementById("form").onsubmit = () => {
+	document.getElementById("submit_button").value = editor.getValue();
 };

@@ -6,5 +6,7 @@ flask_bcrypt
 flask_login
 gunicorn
 html-sanitizer
+bleach
 markdown
 jarowinkler
+nh3
