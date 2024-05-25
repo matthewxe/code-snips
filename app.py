@@ -483,4 +483,4 @@ def get_yell_multi(ws, searched):
 if __name__ == '__main__':
     # with app.app_context():
     #     insert_random(db, 1000)
-    app.run()
+    app.run(host='localhost')
