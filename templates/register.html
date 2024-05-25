@@ -8,18 +8,18 @@
   <div class="mx-auto mb-3 login-input">
     <label class="form-label">Username</label>
     <input required minlength="4" maxlength="50" class="form-control" type="text" autofocus autocomplete="off"
-      name="username" placeholder="Username" aria-label="Username" />
+      name="username" placeholder="Username" aria-label="Username" value="{{ username }}" />
     <div class="form-text">Usernames are always lowercase</div>
   </div>
   <div class="mx-auto mb-3 login-input required">
     <label minlength="4" maxlength="50" for="inputPassword5" class="form-label">Password</label>
     <input required class="form-control" type="password" autocomplete="new-password" name="password"
-      placeholder="Password" aria-label="Password" />
+      placeholder="Password" aria-label="Password" value="{{ password }}" />
   </div>
   <div class="mx-auto mb-3 login-input">
     <label minlength="4" maxlength="50" for="inputPassword5" class="form-label">Confirm password</label>
     <input required class="form-control" type="password" autocomplete="off" name="confirm_password"
-      placeholder="Confirm password" aria-label="Confirm password" />
+      placeholder="Confirm password" aria-label="Confirm password" value="{{ confirm_password }}" />
     <sub>Already have an account? <a href="login">Click here to log in</a></sub>
   </div>
   <button class="btn btn-primary position-relative start-50 translate-middle-x" type="submit">Register</button>

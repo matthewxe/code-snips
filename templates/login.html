@@ -8,13 +8,13 @@
   <div class="mx-auto mb-3 login-input">
     <label class="form-label">Username</label>
     <input required class="form-control" type="text" autofocus autocomplete="off" name="username" placeholder="Username"
-      aria-label="Username" />
+      aria-label="Username" value="{{ username }}" />
     <!-- <div class="form-text">Usernames are always lowercase</div> -->
   </div>
   <div class="mx-auto mb-3 login-input required">
     <label for="inputPassword5" class="form-label">Password</label>
     <input required class="form-control" type="password" autocomplete="current-password" name="password"
-      placeholder="Password" aria-label="Password" />
+      placeholder="Password" aria-label="Password" value="{{ password }}" />
   </div>
   <button class="btn btn-primary position-relative start-50 translate-middle-x" type="submit">Log in</button>
 </form>

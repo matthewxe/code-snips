@@ -10,7 +10,7 @@ async function create_card(json) {
 	const yell_id = json["yell_id"];
 
 	const card = document.createElement("div");
-	card.className = "bg-body-tertiary mx-2 card p-3 flex-grow-1";
+	card.className = "bg-body-tertiary card p-3 flex-grow-1";
 	const title_container = document.createElement("div");
 	title_container.className = "d-flex align-middle";
 	const title = document.createElement("h3");
