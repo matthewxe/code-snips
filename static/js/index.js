@@ -5,7 +5,7 @@ const recent = document.getElementById("recently_uploaded");
 
 async function spinner_replace(id, div) {
 	const get = await get_yell(id);
-	if (get == 404) {
+	if (get == "404") {
 		div.innerHTML = "Could not load this post right now.";
 	} else {
 		const card = await create_card(get);
