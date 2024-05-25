@@ -1,26 +1,14 @@
 const main = document.getElementById("main");
+const warn = document.getElementById("warn");
+const spinner = document.getElementById("spinner");
 
-async function get_yell(id) {
-	const result = await fetch("/yell/" + id);
-	return await result.json();
-}
-
-async function get_post(id) {
-	const result = await fetch("/yell/" + id);
-	return await result.json();
-}
-async function get_request(id) {
-	const result = await fetch("/yell/" + id);
-	return await result.json();
-}
-
-async function get_tags(id) {
-	const result = await fetch("/tags/" + id);
+async function get_api(id, type = "yell") {
+	const result = await fetch("/api/" + type + "/" + id);
 	return await result.json();
 }
 
 async function append_tags(title, id) {
-	const tags = await get_tags(id);
+	const tags = await get_api(id, "tags");
 	if (tags == "404") {
 		return "404";
 	}
@@ -33,17 +21,15 @@ async function append_tags(title, id) {
 	}
 }
 
-// async function create_card(json) {
-async function create_card(json, tags) {
-	const yell_id = json["yell_id"];
-
-	const card = document.createElement("div");
+async function create_base_card(json) {
+	//{{{
+	var card = document.createElement("div");
 	card.className = "bg-body-tertiary card p-3 flex-grow-1";
 	const title_container = document.createElement("div");
 	title_container.className = "d-flex align-middle";
 	const title = document.createElement("h3");
 	title.className = "pe-5 flex-grow-1";
-	title.innerHTML = json["yell_title"];
+	title.innerHTML = json["base_title"];
 
 	title_container.appendChild(title);
 	card.appendChild(title_container);
@@ -56,13 +42,19 @@ async function create_card(json, tags) {
 		"Made by " +
 		json["author"] +
 		", " +
-		new Date(json["yell_datetime"]).toLocaleString();
+		new Date(json["base_datetime"]).toLocaleString();
 	const made_inLang = document.createElement("p");
 	made_inLang.className = "pe-3 align-middle text-info";
 	made_inLang.innerHTML = json["post_filename"];
 	lower_container.appendChild(made_by);
 	lower_container.appendChild(made_inLang);
 	card.appendChild(lower_container);
+	return card;
+} //}}}
+async function create_post_card(json) {
+	//{{{
+	const post_id = json["post_content_id"];
+	const card = await create_base_card(json);
 
 	const accordion = document.createElement("div");
 	accordion.className = "accordion";
@@ -76,22 +68,22 @@ async function create_card(json, tags) {
 	description_header_button.type = "button";
 	description_header_button.dataset.bsToggle = "collapse";
 	description_header_button.dataset.bsTarget =
-		"#accordionPanelDescription" + yell_id;
+		"#accordionPanelDescription" + post_id;
 	description_header_button.ariaExpanded = "false";
 	description_header_button.ariaControls =
-		"accordionPanelDescription" + yell_id;
+		"accordionPanelDescription" + post_id;
 	description_header_button.innerHTML = "Description";
 	description_header.appendChild(description_header_button);
 	description.appendChild(description_header);
 
 	const description_content = document.createElement("div");
-	description_content.id = "accordionPanelDescription" + yell_id;
+	description_content.id = "accordionPanelDescription" + post_id;
 	description_content.className = "accordion-collapse collapse";
 
 	const description_content_body = document.createElement("div");
 	description_content_body.className = "accordion-body";
 	description_content_body.innerHTML = json["post_description"];
-	append_tags(description_content_body, yell_id);
+	append_tags(description_content_body, post_id);
 	description_content.appendChild(description_content_body);
 	description.appendChild(description_content);
 	accordion.appendChild(description);
@@ -104,15 +96,15 @@ async function create_card(json, tags) {
 	code_header_button.className = "accordion-button";
 	code_header_button.type = "button";
 	code_header_button.dataset.bsToggle = "collapse";
-	code_header_button.dataset.bsTarget = "#accordionPanelCode" + yell_id;
+	code_header_button.dataset.bsTarget = "#accordionPanelCode" + post_id;
 	code_header_button.ariaExpanded = "true";
-	code_header_button.ariaControls = "accordionPanelCode" + yell_id;
+	code_header_button.ariaControls = "accordionPanelCode" + post_id;
 	code_header_button.innerHTML = "Code";
 	code_header.appendChild(code_header_button);
 	code.appendChild(code_header);
 
 	const code_content = document.createElement("div");
-	code_content.id = "accordionPanelCode" + yell_id;
+	code_content.id = "accordionPanelCode" + post_id;
 	code_content.className = "accordion-collapse collapse show position-relative";
 
 	const code_content_body = document.createElement("div");
@@ -137,22 +129,65 @@ async function create_card(json, tags) {
 	code.appendChild(code_content);
 	accordion.appendChild(code);
 	card.appendChild(accordion);
-
-	// Prism.highlightElement(code_content_body_pre_code);
 	return card;
 }
+//}}}
+async function create_request_card(json) {
+	const request_id = json["request_content_id"];
+	const card = await create_base_card(json);
 
-async function add_card_byid(id, div = main) {
+	const accordion = document.createElement("div");
+	accordion.className = "accordion";
+
+	const body = document.createElement("div");
+	body.className = "accordion-item";
+	const body_header = document.createElement("h2");
+	body_header.className = "accordion-header";
+	const body_header_button = document.createElement("button");
+	body_header_button.className = "accordion-button";
+	body_header_button.type = "button";
+	body_header_button.dataset.bsToggle = "collapse";
+	body_header_button.dataset.bsTarget = "#accordionPanelbody" + request_id;
+	body_header_button.ariaExpanded = "true";
+	body_header_button.ariaControls = "accordionPanelbody" + request_id;
+	body_header_button.innerHTML = "Body";
+	body_header.appendChild(body_header_button);
+	body.appendChild(body_header);
+
+	const body_content = document.createElement("div");
+	body_content.id = "accordionPanelbody" + request_id;
+	body_content.className = "accordion-collapse collapse show position-relative";
+
+	const body_content_body = document.createElement("div");
+	body_content_body.className = "accordion-body overflow-scroll p-0";
+	body_content_body.innerHTML = json["request_content"];
+
+	body_content.appendChild(body_content_body);
+	body.appendChild(body_content);
+	accordion.appendChild(body);
+	card.appendChild(accordion);
+	return card;
+}
+async function add_card_byid(id, type = yell, div = main) {
 	// console.log("request for post", id);
-	const get = await get_yell(id);
+	const get = await get_api(id, type);
 	if (get == "404") {
 		// console.log("failed request for post", id);
 		return 404;
 	}
-	const tags = await get_tags(id);
+	switch (type) {
+		case "post":
+			var card = await create_post_card(get);
+			div.appendChild(card);
+			return;
+		case "request":
+			var card = await create_request_card(get);
+			div.appendChild(card);
+			break;
+		default:
+			return "404";
+	}
 
-	const card = await create_card(get);
-	div.appendChild(card);
 	// console.log("completed request for post", id);
 }
 
@@ -172,29 +207,27 @@ async function wait_for_scroll() {
 }
 
 async function main_discover() {
-	const get = await get_yell("last");
-	for (var index = get["yell_id"]; index > 0; index--) {
+	const get = await get_api("last", "post");
+	for (var index = get["post_id"]; index > 0; index--) {
 		if (index % 15 == 0) {
 			await wait_for_scroll();
 		}
-		add_card_byid(index);
+		add_card_byid(index, "post");
 	}
 	stop_spinner();
 }
 
 async function main_requests() {
-	const get = await get_yell("last");
-	for (var index = get["yell_id"]; index > 0; index--) {
+	const get = await get_api("last", "request");
+	console.log(get);
+	for (var index = get["request_id"]; index > 0; index--) {
 		if (index % 15 == 0) {
 			await wait_for_scroll();
 		}
-		add_card_byid(index);
+		add_card_byid(index, "request");
 	}
 	stop_spinner();
 }
-
-const warn = document.getElementById("warn");
-const spinner = document.getElementById("spinner");
 
 const showtext = setTimeout(() => {
 	warn.style.display = "block";
@@ -207,4 +240,4 @@ function stop_spinner() {
 	warn.innerHTML = "No more results";
 }
 
-export { get_yell, add_card_byid, create_card, main_discover, stop_spinner };
+export { get_api, add_card_byid, main_discover, main_requests, stop_spinner };
