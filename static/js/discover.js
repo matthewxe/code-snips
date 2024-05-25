@@ -1,6 +1,4 @@
 const main = document.getElementById("main");
-const warn = document.getElementById("warn");
-const spinner = document.getElementById("spinner");
 
 async function get_api(id, type = "yell") {
 	const result = await fetch("/api/" + type + "/" + id);
@@ -53,7 +51,7 @@ async function create_base_card(json) {
 } //}}}
 async function create_post_card(json) {
 	//{{{
-	const post_id = json["post_content_id"];
+	const post_id = json["post_id"];
 	const card = await create_base_card(json);
 
 	const accordion = document.createElement("div");
@@ -133,7 +131,9 @@ async function create_post_card(json) {
 }
 //}}}
 async function create_request_card(json) {
-	const request_id = json["request_content_id"];
+	//{{{
+	const request_id = json["request_id"];
+	console.log(request_id);
 	const card = await create_base_card(json);
 
 	const accordion = document.createElement("div");
@@ -159,28 +159,35 @@ async function create_request_card(json) {
 	body_content.className = "accordion-collapse collapse show position-relative";
 
 	const body_content_body = document.createElement("div");
-	body_content_body.className = "accordion-body overflow-scroll p-0";
+	body_content_body.className = "accordion-body overflow-scroll";
 	body_content_body.innerHTML = json["request_content"];
+	append_tags(body_content_body, request_id);
 
 	body_content.appendChild(body_content_body);
 	body.appendChild(body_content);
 	accordion.appendChild(body);
 	card.appendChild(accordion);
 	return card;
-}
+} //}}}
 async function add_card_byid(id, type = yell, div = main) {
-	// console.log("request for post", id);
+	console.log("request for post", id);
 	const get = await get_api(id, type);
 	if (get == "404") {
-		// console.log("failed request for post", id);
-		return 404;
+		console.log("failed request for post", id);
+		return "404";
 	}
+	if (type == "yell") {
+		type = get["base_type"];
+	}
+	console.log(type);
 	switch (type) {
 		case "post":
+		case "pst":
 			var card = await create_post_card(get);
 			div.appendChild(card);
 			return;
 		case "request":
+		case "req":
 			var card = await create_request_card(get);
 			div.appendChild(card);
 			break;
@@ -188,7 +195,7 @@ async function add_card_byid(id, type = yell, div = main) {
 			return "404";
 	}
 
-	// console.log("completed request for post", id);
+	console.log("completed request for post", id);
 }
 
 async function wait_for_scroll() {
@@ -208,6 +215,19 @@ async function wait_for_scroll() {
 
 async function main_discover() {
 	const get = await get_api("last", "post");
+
+	const warn = document.getElementById("warn");
+	const spinner = document.getElementById("spinner");
+	const showtext = setTimeout(() => {
+		warn.style.display = "block";
+	}, 7000);
+
+	function stop_spinner() {
+		clearTimeout(showtext);
+		spinner.style.display = "none";
+		warn.style.display = "block";
+		warn.innerHTML = "No more results";
+	}
 	for (var index = get["post_id"]; index > 0; index--) {
 		if (index % 15 == 0) {
 			await wait_for_scroll();
@@ -219,6 +239,19 @@ async function main_discover() {
 
 async function main_requests() {
 	const get = await get_api("last", "request");
+
+	const warn = document.getElementById("warn");
+	const spinner = document.getElementById("spinner");
+	const showtext = setTimeout(() => {
+		warn.style.display = "block";
+	}, 7000);
+
+	function stop_spinner() {
+		clearTimeout(showtext);
+		spinner.style.display = "none";
+		warn.style.display = "block";
+		warn.innerHTML = "No more results";
+	}
 	console.log(get);
 	for (var index = get["request_id"]; index > 0; index--) {
 		if (index % 15 == 0) {
@@ -229,15 +262,4 @@ async function main_requests() {
 	stop_spinner();
 }
 
-const showtext = setTimeout(() => {
-	warn.style.display = "block";
-}, 7000);
-
-function stop_spinner() {
-	clearTimeout(showtext);
-	spinner.style.display = "none";
-	warn.style.display = "block";
-	warn.innerHTML = "No more results";
-}
-
-export { get_api, add_card_byid, main_discover, main_requests, stop_spinner };
+export { get_api, add_card_byid, main_discover, main_requests };

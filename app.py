@@ -318,9 +318,7 @@ def logout():
 @app.route('/discover')  # {{{
 def discover():
     return render_template(
-        'discover.html',
-        current_user=current_user,
-        type='discover'
+        'discover.html', current_user=current_user, type='discover'
     )
 
 
@@ -328,9 +326,7 @@ def discover():
 @app.route('/requests')  # {{{
 def requests():
     return render_template(
-        'discover.html',
-        current_user=current_user,
-        type='request'
+        'discover.html', current_user=current_user, type='request'
     )
 
 
@@ -410,14 +406,12 @@ def post():
         title = clean_text(title)
         filename = clean_text(filename)
 
-        description = clean(
-            markdown(
-                description,
-                extensions=[
-                    codehilite(pygments_style='one-dark'),
-                    fenced_code(),
-                ],
-            )
+        description = markdown(
+            clean(description),
+            extensions=[
+                codehilite(pygments_style='one-dark'),
+                fenced_code(),
+            ],
         )
 
         try:
@@ -521,18 +515,12 @@ def req():
             )
 
         title = clean_text(title)
-        content = clean(
-            markdown(
-                content,
-                extensions=[
-                    codehilite(
-                        pygments_formatter=HtmlFormatter(
-                            style='one-dark', wrapcode=True
-                        )
-                    ),
-                    fenced_code(),
-                ],
-            )
+        content = markdown(
+            clean(content),
+            extensions=[
+                codehilite(pygments_style='one-dark'),
+                fenced_code(),
+            ],
         )
 
         yell = Yell(
@@ -588,34 +576,35 @@ def req():
 # @login_required
 def get_yell(yell_id):
     if yell_id == 'last':
-        query = db.session.execute(
+        base = db.session.execute(
             db.select(Yell).order_by(Yell.yell_id.desc())
         ).scalar()
     elif yell_id == 'rated':
-        query = db.session.execute(
+        base = db.session.execute(
             db.select(Yell).order_by(Yell.yell_rating.desc())
         ).scalar()
     else:
-        query = db.session.get(Yell, yell_id)
+        base = db.session.get(Yell, yell_id)
         db.session.get
-    if not query:
+    if not base:
         return '404'
 
-    print(query.yell_type)
-    match (query.yell_type):
+    print(base.yell_type)
+    match (base.yell_type):
         case 'pst':
             post = db.session.execute(
-                db.select(Post).filter_by(base_yell_id=query.yell_id)
+                db.select(Post).filter_by(base_yell_id=base.yell_id)
             ).scalar()
             if not post:
                 return '404'
             return jsonify(
-                yell_id=query.yell_id,
-                yell_title=query.yell_title,
-                author=query.author.username,
-                yell_rating=query.yell_rating,
-                yell_datetime=query.yell_datetime.isoformat(),
-                yell_type=query.yell_type,
+                base_id=base.yell_id,
+                base_title=base.yell_title,
+                base_rating=base.yell_rating,
+                base_datetime=base.yell_datetime.isoformat(),
+                base_type=base.yell_type,
+                author=base.author.username,
+                post_id=post.post_content_id,
                 post_code=post.post_code,
                 post_description=post.post_description,
                 post_filename=post.post_filename,
@@ -623,32 +612,33 @@ def get_yell(yell_id):
 
         case 'req':
             req = db.session.execute(
-                db.select(Request).filter_by(base_yell_id=query.yell_id)
+                db.select(Request).filter_by(base_yell_id=base.yell_id)
             ).scalar()
             if not req:
                 return '404'
             return jsonify(
-                # yell_id=query.yell_id,
-                yell_title=query.yell_title,
-                author=query.author.username,
-                yell_rating=query.yell_rating,
-                yell_datetime=query.yell_datetime.isoformat(),
-                yell_type=query.yell_type,
+                base_id=base.yell_id,
+                base_title=base.yell_title,
+                base_rating=base.yell_rating,
+                base_datetime=base.yell_datetime.isoformat(),
+                base_type=base.yell_type,
+                author=base.author.username,
+                request_id=req.request_content_id,
                 request_content=req.request_content,
             )
         case 'com':
             post = db.session.execute(
-                db.select(Post).filter_by(base_yell_id=query.yell_id)
+                db.select(Post).filter_by(base_yell_id=base.yell_id)
             ).scalar()
             if not post:
                 return '404'
             return jsonify(
-                # yell_id=query.yell_id,
-                yell_title=query.yell_title,
-                author=query.author.username,
-                yell_rating=query.yell_rating,
-                yell_type=query.yell_type,
-                yell_datetime=query.yell_datetime.isoformat(),
+                # yell_id=base.yell_id,
+                yell_title=base.yell_title,
+                author=base.author.username,
+                yell_rating=base.yell_rating,
+                yell_type=base.yell_type,
+                yell_datetime=base.yell_datetime.isoformat(),
                 post_code=post.post_code,
                 post_description=post.post_description,
                 post_filename=post.post_filename,
@@ -689,6 +679,8 @@ def get_post(post_id):
         post_description=post.post_description,
         post_filename=post.post_filename,
     )
+
+
 # }}}
 @app.route('/api/request/<request_id>')  # {{{
 # @login_required
@@ -718,7 +710,10 @@ def get_request(request_id):
         request_id=req.request_content_id,
         request_content=req.request_content,
     )
+
+
 # }}}
+
 
 @sock.route('/api/yell/search/<searched>')  # {{{
 # @login_required

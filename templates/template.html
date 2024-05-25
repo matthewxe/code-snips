@@ -13,6 +13,7 @@
   <meta content="#6610f2 " data-react-helmet="true" name="theme-color" />
   <!-- Bootstrap -->
   <link rel="stylesheet" href="../static/css/bootstrap.css" />
+  <script defer src="../static/npm/node_modules/@popperjs/core/dist/umd/popper.min.js"></script>
   <script defer src="../static/npm/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
   <title>
     {% block title %} {% endblock %} Yällo! The friendly code snippet sharing
@@ -42,7 +43,22 @@
           <a class="nav-link" href="/requests">Requests</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/create">Create</a>
+          <div class="dropdown">
+            <!-- <a class="nav-link" href="/create">Create</a> -->
+            <button class="btn nav-link btn-tertiary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+              aria-expanded="false">
+              Create
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="/create">Create</a></li>
+              <li>
+                <a class="dropdown-item" href="/create/post">Post</a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="/create/request">Request</a>
+              </li>
+            </ul>
+          </div>
         </li>
       </ul>
 
