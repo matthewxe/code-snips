@@ -182,6 +182,16 @@ class Rating(db.Model):
     def __repr__(self):
         return f'<Rating id: {self.rating_id} critic: {self.critic_id} rate: {self.rating}>'
 
+class Report(db.Model):
+    report_id: Mapped[int] = mapped_column(primary_key=True)
+    original_yell_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey('yell_table.yell_id'), nullable=False
+    )
+    report: Mapped[str] = mapped_column(String(5000), nullable=False)
+    reporter_id: Mapped[int] = mapped_column(
+        ForeignKey('user_table.id'), nullable=False
+    )
+
 
 with app.app_context():
     db.create_all()
@@ -585,7 +595,7 @@ def req():
 
 
 # }}}
-# /<any(post, request):yell_type>/<id>  {{{
+# /<any(post, request, comment):yell_type>/<id>  {{{
 # Thanks cs50.ai for the route tricks
 @app.route(
     '/<any(post, request, comment):yell_type>/<id>', methods=['GET', 'POST']
@@ -679,7 +689,7 @@ def yell_page(yell_type, id):
 
 
 # }}}
-# /<any(post, request):yell_type>/<id>/<rate_type>  {{{
+# /<any(post, request, comment):yell_type>/<id>/<rate_type>  {{{
 @app.route(
     '/<any(post, request, comment):yell_type>/<id>/<any(like, unlike):rate_type>',
     
@@ -774,7 +784,7 @@ def do_rate(yell_type, id, rate_type):
 
 
 # }}}
-# /<any(post, request):yell_type>/<id>/status  {{{
+# /<any(post, request, comment):yell_type>/<id>/status  {{{
 @app.route('/<any(post, request, comment):yell_type>/<id>/status')
 def rate_status(yell_type, id):
     critic_id = current_user.get_id()
@@ -813,8 +823,46 @@ def rate_status(yell_type, id):
 )
 def report_yell(yell_type, id):
     if request.method == 'POST':
+        send_error = lambda warning: render_template(
+            'post.html',
+            warning=warning,
+            current_user=current_user,
+            report=report or '',
+        )
+        user_id = current_user.get_id()
+        report = request.form.get('report')
+        if not user_id or current_user.is_authenticated != True:
+            return redirect(url_for(f'login?prev=/{yell_type}/{id}/report'))
+        elif not report:
+            return send_error('Must provide a report')
+        elif not len(report) >= 3 or not len(report) <= 1000:
+            return send_error(
+                'report must be atleast 3 characters long and a maximum of 1000',
+            )
 
-        return redirect('/' + yell_type + '/' + id)
+
+        match (yell_type):
+            case 'post':
+                data = db.session.get(Post, id)
+            case 'request':
+                data = db.session.get(Request, id)
+            case 'comment':
+                data = db.session.get(Comment, id)
+            case _:
+                return send_error(
+                    'Something went wrong, please report this error, CODE: 1'
+                )
+        if not data:
+            return send_error(
+                'Something went wrong, please report this error, CODE: 4',
+            )
+        original_yell_id = data.original_yell_id
+
+        reported = Report(original_yell_id=original_yell_id,report=report,reporter_id=user_id)
+        db.session.add(reported)
+        db.session.commit()
+            
+        return redirect(f"/{yell_type}/{id}")
     else:
         user_id = current_user.get_id()
         if not user_id or current_user.is_authenticated == False:
@@ -870,6 +918,7 @@ def mark_yell(id):
 
     if not critic_id == data.base_yell.author_id:
         return 'failed'
+
 
     print(data.request_state)
     print(not data.request_state)

@@ -1,8 +1,9 @@
 {% extends "template.html" %}
 {% block head %}
-<link href="../static/css/pygments.css" rel="stylesheet" />
+<link href="/static/css/pygments.css" rel="stylesheet" />
+<link href="/static/css/discover.css" rel="stylesheet" />
 {% if search %}
-<script defer type="module" src="../static/js/search.js"></script>
+<script defer type="module" src="/static/js/search.js"></script>
 {% else %}
 {% endif %}
 {% endblock %}
