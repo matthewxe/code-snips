@@ -380,7 +380,7 @@ def post():
         db.session.add(yell)
         db.session.flush()
         db.session.add(
-            Pst(
+            Post(
                 original_yell_id=yell.yell_id,
                 post_description=description,
                 post_code=code,
@@ -434,7 +434,7 @@ def get_yell(yell_id):
     match (query.yell_type):
         case 'pst':
             post = db.session.execute(
-                db.select(Pst).filter_by(original_yell_id=query.yell_id)
+                db.select(Post).filter_by(original_yell_id=query.yell_id)
             ).scalar()
             return jsonify(
                 yell_id=query.yell_id,
@@ -475,7 +475,7 @@ def get_yell_multi(ws, searched):
         temp_dict[query.yell_id] = 0
 
         post = db.session.execute(
-            db.select(Pst).filter_by(original_yell_id=query.yell_id)
+            db.select(Post).filter_by(original_yell_id=query.yell_id)
         ).scalar()
         eval = [
             post.post_description,
@@ -507,46 +507,6 @@ def send_temp_dict(ws, temp_dict):
 
 # }}}
 
-
-# def insert_random(db, max):  # {{{
-#     import random, string
-#
-#     def randomword(length):
-#         letters = string.ascii_lowercase
-#         return ''.join(random.choice(letters) for i in range(length))
-#
-#     for i in range(max):
-#         # print(i)
-#
-#         fake_user = i
-#         # fake_user = random.randint(0, max)
-#         db.session.add(
-#             User(
-#                 id=fake_user,
-#                 username=randomword(50),
-#                 # hash=bcrypt.generate_password_hash(randomword(50)),
-#                 hash=randomword(50),
-#             )
-#         )
-#         db.session.add(
-#             Yell(
-#                 yell_id=i,
-#                 yell_author_id=fake_user,
-#                 yell_title=randomword(50),
-#                 yell_description=randomword(500),
-#                 yell_code=randomword(1000),
-#                 yell_filename=randomword(15),
-#             )
-#         )
-#
-#     db.session.commit()
-#
-#
-# with app.app_context():
-#     insert_random(db, 10000)
-#
-#
-# # }}}
 
 if __name__ == '__main__':
     app.run(host='localhost')
