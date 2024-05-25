@@ -1,7 +1,12 @@
 # Yällo!
 #### Video Demo: https://youtu.be/N6QyHvpMC0k
 #### Description: A code sharing solution that allows users to share and request code with a clean and intuitive look.
-#### Currently now live at: https://gravitationally.online
+#### Currently now live at ~~probably not~~: https://gravitationally.online
+
+### [Screenshots](code-snips/screenshots):
+<img src="screenshots/screenshot.png">
+<img src="screenshots/screenshot2.png">
+<img src="screenshots/screenshot5.png">
 
 ### Share code solutions with other programmers
 It is a code sharing solution where other programmers can ask other programmers for solutions or share what their solutions are on regular problems like a binary sort for example. It can be a safe environment with the report feature and you can like and reply to any Post allowing for frequent discussions. You can also search up everything in the search tab allowing you to look up a variety of things. I made this because I felt that this website idea needed some more innovation and variety, so I tried making my own mix into things and trying it out!
