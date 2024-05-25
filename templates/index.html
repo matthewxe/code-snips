@@ -1,6 +1,9 @@
 {% extends "template.html" %}
 {% block head %}
-<link rel="stylesheet" href="../static/css/index.css">{% endblock %}
+<link rel="stylesheet" href="../static/css/index.css">
+<link rel="stylesheet" href="../static/css/pygments.css">
+<script defer type="module" src="../static/js/index.js"></script>
+{% endblock %}
 {% block body %}
 <h1 class="text-center" id="title">Yällo!</h1>
 <h1 class="mx-5 text-center fw-normal">
@@ -24,17 +27,19 @@
 <div class="container-sm mx-auto">
   <div class="row">
     <div class="d-flex flex-column col me-3">
-      <span class="mx-auto">Most Popular</span>
-      <div class="bg-body-tertiary">Something good</div>
-      <div class="m-auto bg-body-tertiary spinner-border" role="status">
-        <span class="visually-hidden">Loading...</span>
+      <span class="mx-auto">Highest Rated</span>
+      <div id="highest_rated" class="text-center">
+        <div class="m-auto bg-body-tertiary spinner-border" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
       </div>
     </div>
     <div class="d-flex flex-column col ms-3">
       <span class="mx-auto">Recently Uploaded</span>
-      <div class="bg-body-tertiary">Rightfully banned</div>
-      <div class="m-auto bg-body-tertiary spinner-border" role="status">
-        <span class="visually-hidden">Loading...</span>
+      <div id="recently_uploaded" class="text-center">
+        <div class="m-auto bg-body-tertiary spinner-border" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
       </div>
     </div>
   </div>
