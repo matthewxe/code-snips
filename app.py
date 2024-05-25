@@ -5,6 +5,7 @@ from flask import (
     render_template,
     url_for,
     jsonify,
+    session,
 )
 from json import dumps, loads
 from flask_sock import Sock
@@ -61,6 +62,7 @@ SUPPORTED_LANGS = {
 # Flask Setup {{{
 app = Flask(__name__)
 sock = Sock(app)
+app.config['SOCK_SERVER_OPTIONS'] = {'ping_interval': 7}
 from os import urandom
 
 app.config['SECRET_KEY'] = urandom(24)
@@ -398,59 +400,54 @@ def get_yell(yell_id):
 
 @sock.route('/yell/search/<searched>')  # {{{
 def get_yell_multi(ws, searched):
+    # if session.get('ws'):
+    #     ws = session['ws']
+    # else:
+    #     session['ws'] = ws
     print('socketd', ws, searched)
     all = Post.query.all()
     temp_dict = {}
-    waiting = False
-    while True:
-        if waiting == True:
-            data = ws.receive
-            if data == 'next':
-                print('recieved')
-                waiting = False
+    print('not waiting')
+    for idx, query in enumerate(all, 1):
+        print(idx)
+        if idx % 15 == 0:
 
-        elif waiting == False:
-            # else:
-            print('not waiting')
-            for idx, query in enumerate(all, 1):
-                print(idx)
-
-                if idx % 15 == 0:
-
-                    temp_dict = dict(
-                        sorted(
-                            temp_dict.items(),
-                            key=lambda item: item[1],
-                            reverse=True,
-                        )
-                    )
-                    for result in temp_dict:
-                        ws.send(result)
-                    waiting = True
-                    break
-
-                temp_dict[query.yell_id] = 0
-                langs = SUPPORTED_LANGS.get(query.yell_language)
-                ass = dict(
-                    yell_id=query.yell_id,
-                    yell_maker_id=query.yell_maker_id,
-                    yell_maker=User.query.filter_by(id=query.yell_maker_id)
-                    .first()
-                    .username,
-                    # yell_language=langs.name,
-                    # yell_language_prism=langs.prism,
-                    yell_title=query.yell_title,
-                    yell_rating=query.yell_rating,
-                    yell_description=query.yell_description,
-                    yell_code=query.yell_code,
-                    yell_datetime=str(query.yell_datetime),
+            temp_dict = dict(
+                sorted(
+                    temp_dict.items(),
+                    key=lambda item: item[1],
+                    reverse=True,
                 )
-                print(ass)
-                for key in ass:
-                    print(ass[key])
-                    temp_dict[query.yell_id] += jarowinkler_similarity(
-                        str(searched), str(ass[key])
-                    )
+            )
+            for result in temp_dict:
+                ws.send(result)
+            temp_dict = {}
+            while True:
+                data = ws.receive()
+                if data == 'next':
+                    print('recieved')
+                break
+
+        temp_dict[query.yell_id] = 0
+        langs = SUPPORTED_LANGS.get(query.yell_language)
+        ass = dict(
+            yell_id=query.yell_id,
+            yell_maker_id=query.yell_maker_id,
+            yell_maker=User.query.filter_by(id=query.yell_maker_id)
+            .first()
+            .username,
+            # yell_language=langs.name,
+            # yell_language_prism=langs.prism,
+            yell_title=query.yell_title,
+            yell_rating=query.yell_rating,
+            yell_description=query.yell_description,
+            yell_code=query.yell_code,
+            yell_datetime=str(query.yell_datetime),
+        )
+        for key in ass:
+            temp_dict[query.yell_id] += jarowinkler_similarity(
+                str(searched), str(ass[key])
+            )
 
 
 # }}}

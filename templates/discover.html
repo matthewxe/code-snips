@@ -22,18 +22,20 @@
     <span class="visually-hidden">Loading...</span>
   </div>
 </div>
-<div id="warn" class="d-flex justify-content-center p-5 d-none">
-  <div class="w-50 mx-auto mt-5 alert alert-info" role="info">
-    <h1>We are sorry if its taking a while, please don't refresh the page.</h1>
-  </div>
-</div>
+<h5 id="warn" class="text-center" style="display: none;">
+  We are sorry if its taking a while, please don't refresh the page.
+</h5>
+<!-- <div id="warn" class="justify-content-center p-5" style="display: none;"> -->
+<!-- <div class="w-50 mx-auto mt-5 alert alert-info" role="info"> -->
+<!--   <h1>We are sorry if its taking a while, please don't refresh the page.</h1> -->
+<!-- </div> -->
+<!-- </div> -->
 <script>
-  setTimeout(() => {
-    const box = document.getElementById('box');
+  var el = document.getElementById('warn');
 
-    // 👇️ hides element (still takes up space on the page)
-    box.style.visibility = 'show';
-  }, 1000);
+  setTimeout(() => {
+    el.style.display = 'block';
+  }, 7000); // 👈️ delay in milliseconds
 </script>
 <!--   <button id="next" type="button" class="container mx-auto text-center btn btn-primary">Next</button> -->
 {% endblock %}
